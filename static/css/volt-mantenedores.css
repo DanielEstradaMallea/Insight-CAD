@@ -1,0 +1,176 @@
+/* volt-institucional.css */
+/* Encabezado de la tabla */
+.volt-header {
+    background: #23283a;
+    border-radius: 12px 12px 0 0;
+    padding: 2rem 2.2rem 1rem 2.2rem;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    margin-bottom: 0;
+}
+
+.volt-header h1 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: .01em;
+}
+
+/* Botón principal */
+.btn.volt-btn-institucional {
+    background: #23283a;
+    color: #fff !important;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    transition: background 0.2s;
+}
+
+.btn.volt-btn-institucional:hover,
+.btn.volt-btn-institucional:focus {
+    background: #0e2d50;
+    color: #fff !important;
+    border: none;
+}
+
+/* Tabla institucional */
+table.volt-table th {
+    background: #23283a !important;
+    color: #fff !important;
+    font-weight: 600;
+    text-align: center;
+}
+
+table.volt-table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+/* Sombra y borde de card */
+.card.card-volt {
+    box-shadow: 0 3px 16px rgba(17, 54, 98, 0.06);
+    border-radius: 12px;
+    border: none;
+    margin-bottom: 3rem;
+}
+
+.btn-acciones {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: center;
+}
+
+.badge-success {
+    background: #38a535;
+    color: #fff;
+}
+
+.badge-danger {
+    background: #dc3545;
+    color: #fff;
+}
+
+.alert-fixed {
+    position: fixed;
+    top: 90px;
+    right: 24px;
+    z-index: 9999;
+    min-width: 300px;
+}
+
+/* Switch institucional personalizado */
+.switch-institucional {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 1rem;
+}
+
+.switch-institucional .form-switch .form-check-input {
+    width: 2.8em;
+    height: 1.3em;
+    background: #d6d9e4;
+    border: 2px solid #113662;
+    box-shadow: 0 0 0 0.2rem rgba(17, 54, 98, .10);
+    transition: background 0.3s;
+    cursor: pointer;
+}
+
+.switch-institucional .form-switch .form-check-input:checked {
+    background: rgb(49, 217, 15);
+    border-color: rgb(98, 34, 17);
+}
+
+.switch-institucional .form-check-label {
+    font-weight: 600;
+    color: #113662;
+    margin-left: 0.5rem;
+}
+
+.switch-institucional .badge {
+    font-size: 0.95em;
+    background: #fff3cd;
+    color: #113662;
+    margin-left: .3rem;
+    border-radius: 6px;
+    padding: 0.3em 0.7em;
+    font-weight: 600;
+    box-shadow: 0 1px 5px 0 rgba(17, 54, 98, 0.08);
+    border: 1px solid #ffe08a;
+}
+
+/* DataTables pagination custom */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    background: #23283a !important;
+    color: #fff !important;
+    border: 2px solid #23283a !important;
+    border-radius: 6px !important;
+    margin: 0 2px;
+    padding: 4px 14px;
+    font-weight: 600;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #fff !important;
+    color: #23283a !important;
+    border: 2px solid #23283a !important;
+    font-weight: 700;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
+    background: #eee !important;
+    color: #888 !important;
+    border: 1px solid #eee !important;
+}
+
+.dataTables_wrapper .dataTables_length select,
+.dataTables_wrapper .dataTables_filter input {
+    border-radius: 8px;
+    border: 1.5px solid #23283a;
+    padding: 4px 8px;
+    background: #fff;
+    margin: 0 6px;
+}
+
+/* Ajusta la sombra del header blanco donde están los botones y el switch */
+.volt-toolbar-bg {
+    background: #fff;
+    border-radius: 0 0 10px 10px;
+    box-shadow: 0 2px 8px rgba(17, 54, 98, .05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.1rem 2.2rem 1.1rem 2.2rem;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+
+    .volt-header,
+    .volt-toolbar-bg {
+        padding: 1.2rem 1rem 1rem 1rem;
+        flex-direction: column;
+        gap: 1.2rem;
+    }
+}

@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<head>
+  <title>Buscador de Personas</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background-color: #f7f8fc; font-family: 'Montserrat', Arial, sans-serif;}
+    .search-card {
+      max-width: 700px;
+      margin: 28px auto 0 auto;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 4px 24px rgba(45, 62, 80, 0.08);
+      padding: 30px 34px 24px 34px;
+      animation: fadeIn 0.8s;
+    }
+    .results-card {
+      margin: 36px auto 0 auto;
+      max-width: 900px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 4px 24px rgba(45, 62, 80, 0.08);
+      padding: 24px 26px;
+      animation: fadeIn 0.8s;
+    }
+    .tabla-contenedor {
+      max-height: 410px;
+      overflow-y: auto;
+      border-radius: 7px;
+      margin-bottom: 16px;
+      border: 1px solid #e5e7eb;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 15px;
+      background: #fff;
+    }
+    thead th {
+      background: #071a2e;
+      color: #fff;
+      font-weight: 700;
+      padding: 12px 6px;
+      border-bottom: 2px solid #244074;
+      text-transform: uppercase;
+    }
+    td, th { text-align: center; padding: 8px; }
+    tbody tr:hover { background: #e0f7fa; }
+    tbody tr:nth-child(odd) { background: #f9fafb; }
+    tbody tr:nth-child(even) { background: #fff; }
+    .btn { border-radius: 7px; padding: 8px 16px; font-weight: 600; }
+    .btn-primary { background: #071a2e; color: #fff; }
+    .btn-success { background: #22c55e; color: #fff; }
+    .btn-secondary { background: #5a6268; color: #fff; }
+    .btn:disabled { background: #d1d5db; color: #555; }
+    .collapse .card { background: #f4f6fa; border-radius: 11px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+
+<div class="search-card">
+  <h2 class="mb-4"><i class="fa-solid fa-user-large"></i> Buscador de Personas</h2>
+  <form method="GET" action="{% url 'utilidades:buscar_persona' %}" autocomplete="off">
+    <div class="mb-3">
+      <label for="rut" class="form-label"><i class="fa-solid fa-id-card"></i> RUT</label>
+      <input type="text" class="form-control" id="rut" name="rut" placeholder="Ingrese RUT" value="{{ rut }}" autocomplete="off">
+    </div>
+    <div class="mb-3">
+      <label for="nombre" class="form-label"><i class="fa-solid fa-user"></i> Nombre y/o Apellido</label>
+      <input type="text" class="form-control" id="nombre" name="nombre" placeholder="Ingrese nombre o apellido" value="{{ nombre }}" autocomplete="off">
+    </div>
+    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Buscar</button>
+  </form>
+</div>
+
+{% if persons %}
+  <div class="results-card">
+    <h4>Resultados de Búsqueda</h4>
+    <form method="GET" action="{% url 'utilidades:eventos_persona' %}" id="listaEventosForm">
+      <div class="tabla-contenedor">
+        <table>
+          <thead>
+            <tr>
+              <th>Seleccionar</th>
+              <th>RUT</th>
+              <th>Nombre Completo</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for person in persons %}
+              <tr>
+                <td><input type="radio" name="persona_id" value="{{ person.id_persona }}"></td>
+                <td>{{ person.rut }}</td>
+                <td>{{ person.nombre }} {{ person.paterno }} {% if person.materno %}{{ person.materno }}{% endif %}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <button type="button" class="btn btn-success" data-bs-toggle="collapse" data-bs-target="#dateRangePanel" aria-expanded="false" aria-controls="dateRangePanel" id="btnGenerarLista" disabled>
+        <i class="fa-solid fa-calendar-check"></i> Generar Lista
+      </button>
+      <div class="collapse mt-3" id="dateRangePanel">
+        <div class="card card-body p-3">
+          <div class="mb-3">
+            <label for="fecha_inicio" class="form-label"><i class="fa-regular fa-calendar-days"></i> Fecha Inicio</label>
+            <input type="date" class="form-control" id="fecha_inicio" name="fecha_inicio" required>
+          </div>
+          <div class="mb-3">
+            <label for="fecha_fin" class="form-label"><i class="fa-regular fa-calendar-days"></i> Fecha Fin</label>
+            <input type="date" class="form-control" id="fecha_fin" name="fecha_fin" required>
+          </div>
+          <button type="submit" class="btn btn-primary w-100"><i class="fa-solid fa-file-export"></i> Generar Lista de Eventos</button>
+        </div>
+      </div>
+    </form>
+  </div>
+{% elif rut or nombre %}
+  <div class="results-card">
+    <p class="text-warning">No se encontraron resultados para los criterios ingresados.</p>
+  </div>
+{% endif %}
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Habilita el botón solo cuando se selecciona una persona
+  const radios = document.getElementsByName('persona_id');
+  const btnGenerar = document.getElementById('btnGenerarLista');
+  radios.forEach(radio => {
+    radio.addEventListener('change', function() {
+      btnGenerar.disabled = !document.querySelector('input[name="persona_id"]:checked');
+    });
+  });
+
+  // Validar selección antes de enviar formulario
+  document.getElementById('listaEventosForm').addEventListener('submit', function(e){
+    if (!document.querySelector('input[name="persona_id"]:checked')) {
+      e.preventDefault();
+      alert('Por favor, seleccione una persona para generar la lista de eventos.');
+    }
+  });
+</script>
+{% endblock %}

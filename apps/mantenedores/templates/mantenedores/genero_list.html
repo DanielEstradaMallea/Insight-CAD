@@ -1,0 +1,402 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<style>
+    .volt-header {
+        background: #23283a;
+        border-radius: 12px 12px 0 0;
+        padding: 2rem 2.2rem 1rem 2.2rem;
+        display: flex;
+        align-items: center;
+        color: #fff;
+        margin-bottom: 0;
+    }
+
+    .volt-header h1 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 2rem;
+        letter-spacing: .01em;
+    }
+
+    .volt-btn-institucional {
+        background: #23283a;
+        color: #fff !important;
+        font-weight: 600;
+        border-radius: 6px;
+        border: none;
+        transition: background 0.2s;
+    }
+
+    .volt-btn-institucional:hover,
+    .volt-btn-institucional:focus {
+        background: #0e2d50;
+        color: #fff !important;
+        border: none;
+    }
+
+    .volt-table th {
+        background: #23283a !important;
+        color: #fff !important;
+        font-weight: 600;
+        text-align: center;
+    }
+
+    .volt-table td {
+        vertical-align: middle;
+        text-align: center;
+    }
+
+    .btn-acciones {
+        display: flex;
+        gap: 0.4rem;
+        justify-content: center;
+    }
+
+    .card-volt {
+        box-shadow: 0 3px 16px rgba(17, 54, 98, 0.06);
+        border-radius: 12px;
+        border: none;
+        margin-bottom: 3rem;
+    }
+
+    .badge-success {
+        background: #38a535;
+        color: #fff;
+    }
+
+    .badge-danger {
+        background: #dc3545;
+        color: #fff;
+    }
+
+    .alert-fixed {
+        position: fixed;
+        top: 90px;
+        right: 24px;
+        z-index: 9999;
+        min-width: 300px;
+    }
+
+    .switch-institucional {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        font-size: 1rem;
+    }
+
+    .switch-institucional .form-switch .form-check-input {
+        width: 2.8em;
+        height: 1.3em;
+        background: #d6d9e4;
+        border: 2px solid #113662;
+        box-shadow: 0 0 0 0.2rem rgba(17, 54, 98, .10);
+        transition: background 0.3s;
+        cursor: pointer;
+    }
+
+    .switch-institucional .form-switch .form-check-input:checked {
+        background: rgb(49, 217, 15);
+        border-color: rgb(98, 34, 17);
+    }
+
+    .switch-institucional .form-check-label {
+        font-weight: 600;
+        color: #113662;
+        margin-left: 0.5rem;
+    }
+
+    .switch-institucional .badge {
+        font-size: 0.95em;
+        background: #fff3cd;
+        color: #113662;
+        margin-left: .3rem;
+        border-radius: 6px;
+        padding: 0.3em 0.7em;
+        font-weight: 600;
+        box-shadow: 0 1px 5px 0 rgba(17, 54, 98, 0.08);
+        border: 1px solid #ffe08a;
+    }
+</style>
+
+<div class="container mt-5">
+    <div class="volt-header mb-0">
+        <h1>
+            <i class="fa-solid fa-venus-mars me-2"></i> Géneros
+        </h1>
+    </div>
+    <div class="d-flex align-items-center justify-content-between py-3"
+        style="background: #fff; border-radius: 0 0 10px 10px; box-shadow:0 2px 8px rgba(17,54,98,.05);">
+        <button class="btn volt-btn-institucional px-4 py-2" data-bs-toggle="modal" data-bs-target="#addGeneroModal">
+            <i class="fas fa-plus"></i> Nuevo Género
+        </button>
+        <div class="switch-institucional">
+            <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="switchActivos" checked>
+            </div>
+            <label class="form-check-label" for="switchActivos">
+                Solo Activos
+            </label>
+            <span class="badge">Filtrar</span>
+        </div>
+    </div>
+    <div id="alert-container"></div>
+    <div class="card card-volt p-3 mt-0">
+        <table class="table table-striped align-middle volt-table" id="tabla_genero" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Nombre</th>
+                    <th>Estado</th>
+                    <th style="width:110px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for genero in page_genero %}
+                <tr class="{% if genero.activo == 'SI' %}estado-activo{% else %}estado-inactivo{% endif %}"
+                    data-id="{{ genero.id_genero }}">
+                    <td>{{ genero.nombre }}</td>
+                    <td>
+                        {% if genero.activo == 'SI' %}
+                        <span class="badge badge-success">Activo</span>
+                        {% else %}
+                        <span class="badge badge-danger">Inactivo</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <div class="btn-acciones">
+                            <button class="btn btn-warning btn-sm btn-edit-genero" data-bs-toggle="modal"
+                                data-bs-target="#editGeneroModal" data-id="{{ genero.id_genero }}"
+                                data-nombre="{{ genero.nombre }}" data-activo="{{ genero.activo }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center">No se encontraron resultados.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="modal fade" id="editGeneroModal" tabindex="-1" aria-labelledby="editGeneroModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formEditarGenero" method="post" action="{% url 'mantenedor:editar_genero' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editGeneroModalLabel">Editar Género</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <input type="hidden" name="id_genero" id="editIdGenero">
+                    <div class="mb-3">
+                        <label for="editNombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="editNombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editActivo" class="form-label">Estado</label>
+                        <select class="form-select" id="editActivo" name="activo" required>
+                            <option value="SI">Activo</option>
+                            <option value="NO">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+                    <div id="loadingSpinnerEdit" class="spinner-border text-primary ms-3" role="status"
+                        style="display: none;">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<!-- MODAL AGREGAR -->
+<div class="modal fade" id="addGeneroModal" tabindex="-1" aria-labelledby="addGeneroModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <form id="formAgregarGenero" method="post" action="{% url 'mantenedor:agregar_genero' %}">
+                {% csrf_token %}
+                <div class="modal-header">
+                    <h5 class="modal-title" id="addGeneroModalLabel">Agregar Género</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label for="addNombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="addNombre" name="nombre" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="addActivo" class="form-label">Estado</label>
+                        <select class="form-select" id="addActivo" name="activo" required>
+                            <option value="SI">Activo</option>
+                            <option value="NO">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+                    <button type="submit" class="btn btn-success">Agregar</button>
+                    <div id="loadingSpinnerAdd" class="spinner-border text-primary ms-3" role="status"
+                        style="display: none;">
+                        <span class="visually-hidden">Cargando...</span>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    function showAlert(message, type = 'success') {
+        $('#alert-container').html(
+            `<div class="alert alert-${type} alert-dismissible fade show alert-fixed" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>`
+        );
+        setTimeout(() => { $('.alert').alert('close'); }, 2800);
+    }
+
+    $(document).ready(function () {
+        var table = $('#tabla_genero').DataTable({
+            pageLength: 10,
+            lengthMenu: [5, 10, 20, 50, 100],
+            ordering: true,
+            language: {
+                "decimal": "",
+                "emptyTable": "No hay géneros",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ géneros",
+                "infoEmpty": "Mostrando 0 a 0 de 0 géneros",
+                "infoFiltered": "(filtrado de _MAX_ géneros en total)",
+                "thousands": ",",
+                "lengthMenu": "Mostrar _MENU_ géneros",
+                "loadingRecords": "Cargando...",
+                "processing": "Procesando...",
+                "search": "",
+                "searchPlaceholder": "Buscar género...",
+                "zeroRecords": "No se encontraron géneros",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Último",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                }
+            },
+            columnDefs: [{ targets: -1, orderable: false }]
+        });
+
+        // Filtro "solo activos"
+        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+            var showOnlyActivos = $('#switchActivos').prop('checked');
+            if (!showOnlyActivos) return true;
+            var row = table.row(dataIndex).node();
+            return $(row).hasClass('estado-activo');
+        });
+        $('#switchActivos').on('change', function () { table.draw(); });
+        $('#switchActivos').trigger('change');
+
+        // Modal edición con datos
+        $('#editGeneroModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            $('#editIdGenero').val(button.data('id'));
+            $('#editNombre').val(button.data('nombre'));
+            $('#editActivo').val(button.data('activo'));
+        });
+
+        // AJAX editar
+        $('#formEditarGenero').submit(function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var $submitBtn = $form.find('button[type="submit"]');
+            $submitBtn.prop('disabled', true);
+            $('#loadingSpinnerEdit').show();
+            $.ajax({
+                type: 'POST',
+                url: $form.attr('action'),
+                data: $form.serialize(),
+                success: function (response) {
+                    if (response.success) {
+                        $('#editGeneroModal').modal('hide');
+                        let row = $(`#tabla_genero tr[data-id="${$('#editIdGenero').val()}"]`);
+                        row.find('td').eq(0).text($('#editNombre').val());
+                        let estado = $('#editActivo').val();
+                        row.find('td').eq(1).html(
+                            estado === 'SI'
+                                ? '<span class="badge badge-success">Activo</span>'
+                                : '<span class="badge badge-danger">Inactivo</span>'
+                        );
+                        row.removeClass('estado-activo estado-inactivo').addClass(estado === 'SI' ? 'estado-activo' : 'estado-inactivo');
+                        table.draw(false);
+                        showAlert('Género actualizado correctamente');
+                    } else {
+                        showAlert('Error al editar', 'danger');
+                    }
+                },
+                error: function () { showAlert('Error inesperado. Intente más tarde.', 'danger'); },
+                complete: function () {
+                    $submitBtn.prop('disabled', false);
+                    $('#loadingSpinnerEdit').hide();
+                }
+            });
+        });
+
+        // AJAX agregar
+        $('#formAgregarGenero').submit(function (e) {
+            e.preventDefault();
+            var $form = $(this);
+            var $submitBtn = $form.find('button[type="submit"]');
+            $submitBtn.prop('disabled', true);
+            $('#loadingSpinnerAdd').show();
+            $.ajax({
+                type: 'POST',
+                url: $form.attr('action'),
+                data: $form.serialize(),
+                success: function (response) {
+                    if (response.success) {
+                        $('#addGeneroModal').modal('hide');
+                        let nombre = $('#addNombre').val();
+                        let activo = $('#addActivo').val();
+                        let newRow = table.row.add([
+                            nombre,
+                            activo === 'SI'
+                                ? '<span class="badge badge-success">Activo</span>'
+                                : '<span class="badge badge-danger">Inactivo</span>',
+                            `<div class="btn-acciones">
+                <button class="btn btn-warning btn-sm btn-edit-genero" data-bs-toggle="modal"
+                  data-bs-target="#editGeneroModal"
+                  data-id="nuevo" data-nombre="${nombre}" data-activo="${activo}">
+                  <i class="fas fa-edit"></i>
+                </button>
+              </div>`
+                        ]).draw(false).node();
+                        $(newRow).addClass(activo === 'SI' ? 'estado-activo' : 'estado-inactivo');
+                        showAlert('Género agregado correctamente');
+                        $form[0].reset();
+                        table.draw(false);
+                    } else {
+                        showAlert('Error al agregar', 'danger');
+                    }
+                },
+                error: function () { showAlert('Error inesperado. Intente más tarde.', 'danger'); },
+                complete: function () {
+                    $submitBtn.prop('disabled', false);
+                    $('#loadingSpinnerAdd').hide();
+                }
+            });
+        });
+    });
+</script>
+{% endblock %}

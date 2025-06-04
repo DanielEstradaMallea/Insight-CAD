@@ -1,0 +1,530 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+
+<!-- CSS -->
+<link rel="stylesheet" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+<style>
+    body {
+        background: #f4f7fa;
+        font-family: 'Poppins', 'Roboto', sans-serif;
+    }
+    .container {
+        max-width: 1200px;
+        margin: 40px auto 0 auto;
+    }
+    .volt-header {
+        background: #113662;
+        border-radius: 12px 12px 0 0;
+        padding: 2rem 2.2rem 1rem 2.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: #fff;
+        margin-bottom: 0;
+    }
+    .volt-header h2 {
+        margin: 0;
+        font-weight: 700;
+        font-size: 2rem;
+        letter-spacing: .01em;
+    }
+    .volt-btn-institucional {
+        background: #113662;
+        color: #fff !important;
+        font-weight: 600;
+        border-radius: 6px;
+        border: none;
+        transition: background 0.2s;
+    }
+    .volt-btn-institucional:hover,
+    .volt-btn-institucional:focus {
+        background: #0e2d50;
+        color: #fff !important;
+        border: none;
+    }
+    .volt-table th {
+        background: #113662 !important;
+        color: #fff !important;
+        font-weight: 600;
+    }
+    .volt-table td {
+        vertical-align: middle;
+    }
+    .btn-acciones {
+        display: flex;
+        gap: 0.4rem;
+        justify-content: center;
+    }
+    .card-volt {
+        box-shadow: 0 3px 16px rgba(17,54,98,0.06);
+        border-radius: 12px;
+        border: none;
+        margin-bottom: 3rem;
+    }
+    .btn-success {
+        background: #38a535;
+        border: none;
+    }
+    .btn-success:hover {
+        background: #2b7d28;
+    }
+    .btn-info {
+        background: #209ad8;
+        border: none;
+        color: #fff;
+    }
+    .btn-info:hover {
+        background: #15638b;
+    }
+    .modal-header {
+        background: #113662;
+        color: #fff;
+        border-radius: 12px 12px 0 0;
+    }
+    .modal-footer {
+        border-top: none;
+    }
+</style>
+
+<div class="container">
+    <div class="volt-header mb-2">
+        <a href="{% url 'empresa:list-empresas' %}" class="volt-btn-institucional btn px-4 py-2 me-3" style="font-size:1rem;">
+            <i class="fas fa-arrow-left me-2"></i> Volver
+        </a>
+        <h2>
+            <i class="fa-solid fa-building me-2"></i>
+            Sucursales de {{ empresa.nombre }}
+        </h2>
+        <button type="button" class="btn btn-success px-4 py-2" data-bs-toggle="modal" data-bs-target="#agregarSucursalModal">
+            <i class="fa-solid fa-circle-plus me-2"></i> Nueva Sucursal
+        </button>
+    </div>
+    <div class="card card-volt p-3">
+        <table id="tabla_sucursales" class="table table-striped align-middle volt-table" style="width:100%;">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Sucursal</th>
+                    <th>Dirección</th>
+                    <th>Gemelo Digital</th>
+                    <th>Red Apoyo</th>
+                    <th style="width:130px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for sucursal in sucursales %}
+                <tr>
+                    <td>{{ sucursal.id_sucursal }}</td>
+                    <td>{{ sucursal.nombre }}</td>
+                    <td>{{ sucursal.direccion }}</td>
+                    <td>
+                        <a href="https://demo.cyclone-enterprise.com/" class="btn btn-dark btn-sm" disabled>
+                            <i class="fa-brands fa-phabricator fa-xl"></i>
+                        </a>
+                    </td>
+                    <td>
+                        <button class="btn btn-info btn-sm btn-redApoyo"
+                                data-sucursal-id="{{ sucursal.id_sucursal }}">
+                            <i class="fa-solid fa-handshake-angle"></i>
+                        </button>
+                    </td>
+                    <td>
+                        <div class="btn-acciones">
+                            <button type="button" class="btn btn-secondary btn-sm btn-detalles-sucursal"
+                                data-id="{{ sucursal.id_sucursal }}">
+                                <i class="fas fa-eye"></i>
+                            </button>
+                            <button type="button" class="btn btn-warning btn-sm btn-editar-sucursal"
+                                data-id="{{ sucursal.id_sucursal }}">
+                                <i class="fas fa-edit"></i>
+                            </button>
+                            <button type="button" class="btn btn-danger btn-sm btn-eliminar-sucursal"
+                                data-url="{% url 'empresa:eliminar-sucursal' sucursal.id_sucursal %}">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No se encontraron sucursales</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- ========== MODALS ========== -->
+
+{% include 'empresas/partials/modals/sucursal_create_modal.html' %}
+{% include 'empresas/partials/modals/sucursal_detail_modal.html' %}
+{% include 'empresas/partials/modals/sucursal_edit_modal.html' %}
+{% include 'empresas/partials/modals/red_apoyo_modal.html' %}
+
+<!-- JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+$(document).ready(function () {
+    $('#tabla_sucursales').DataTable({
+        pageLength: 10,
+        lengthMenu: [5, 10, 20, 50, 100],
+        ordering: true,
+        language: {
+            "decimal": "",
+            "emptyTable": "No hay datos disponibles",
+            "info": "Mostrando _START_ a _END_ de _TOTAL_ sucursales",
+            "infoEmpty": "Mostrando 0 a 0 de 0 sucursales",
+            "infoFiltered": "(filtrado de _MAX_ sucursales en total)",
+            "thousands": ",",
+            "lengthMenu": "Mostrar _MENU_ sucursales",
+            "loadingRecords": "Cargando...",
+            "processing": "Procesando...",
+            "search": "",
+            "searchPlaceholder": "Búsqueda rápida...",
+            "zeroRecords": "No se encontraron sucursales",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            }
+        },
+        columnDefs: [
+            { targets: -1, orderable: false },
+            { targets: 3, orderable: false },
+            { targets: 4, orderable: false }
+        ]
+    });
+});
+</script>
+
+<script>
+        // SucursalManager: Maneja las acciones de sucursal (crear, editar, eliminar, ver detalles)
+        const SucursalManager = {
+            init: function () {
+                this.setupAjaxDefaults();
+                this.setupEventHandlers();
+            },
+            setupAjaxDefaults: function () {
+                $.ajaxSetup({
+                    headers: {
+                        "X-Requested-With": "XMLHttpRequest",
+                        "X-CSRFToken": this.getCSRFToken()
+                    }
+                });
+            },
+            setupEventHandlers: function () {
+                // Envía formularios de crear y editar
+                $(document).on('submit', '#form-agregar-sucursal, #form-editar-sucursal', (e) => {
+                    e.preventDefault();
+                    this.handleFormSubmit(e);
+                });
+                // Botón eliminar
+                $(document).on('click', '.btn-eliminar-sucursal', (e) => {
+                    this.handleDelete(e);
+                });
+                // Botón ver detalles
+                $(document).on('click', '.btn-detalles-sucursal', (e) => {
+                    this.loadDetails(e);
+                });
+                // Botón editar
+                $(document).on('click', '.btn-editar-sucursal', (e) => {
+                    this.loadEditData(e);
+                });
+            },
+            handleFormSubmit: function (e) {
+                const $form = $(e.currentTarget);
+                const $modal = $form.closest('.modal');
+                const isEdit = $form.attr('id') === 'form-editar-sucursal';
+                $.ajax({
+                    url: $form.attr('action'),
+                    method: 'POST',
+                    data: $form.serialize(),
+                    beforeSend: () => this.toggleLoadingState($form, true),
+                    success: (response) => {
+                        if (response.success) {
+                            $modal.modal('hide');
+                            this.refreshSucursalList();
+                            if (!isEdit) $form[0].reset();
+                        } else {
+                            console.log("Errores en el formulario:", response.errors);
+                            alert("Error en el formulario: " + JSON.stringify(response.errors));
+                        }
+                    },
+                    error: (xhr) => this.handleAjaxError(xhr),
+                    complete: () => this.toggleLoadingState($form, false)
+                });
+            },
+            handleDelete: function (e) {
+                if (!confirm('¿Está seguro de eliminar esta sucursal?')) return;
+                const $btn = $(e.currentTarget);
+                $.ajax({
+                    url: $btn.data('url'),
+                    method: 'POST',
+                    data: { csrfmiddlewaretoken: this.getCSRFToken() },
+                    beforeSend: () => this.toggleLoadingState($btn, true),
+                    success: (response) => {
+                        if (response.success) this.refreshSucursalList();
+                    },
+                    error: (xhr) => this.handleAjaxError(xhr),
+                    complete: () => this.toggleLoadingState($btn, false)
+                });
+            },
+            loadDetails: function (e) {
+                const sucursalId = $(e.currentTarget).data('id');
+                const $modal = $('#detallesSucursalModal');
+                // Muestra el modal inmediatamente con un mensaje de carga
+                $modal.find('.modal-body').html('<p>Cargando detalles...</p>');
+                $modal.modal('show');
+                // Luego realiza la petición AJAX para actualizar el contenido
+                $.get(`/cargar-sucursal/${sucursalId}/`)
+                    .done((response) => {
+                        $modal.find('.modal-body').html(this.buildDetailsContent(response));
+                        this.initMap(response.latitud, response.longitud);
+                    })
+                    .fail((xhr) => this.handleAjaxError(xhr));
+            }
+            ,
+            loadEditData: function (e) {
+                const sucursalId = $(e.currentTarget).data('id');
+                const $modal = $('#editarSucursalModal');
+                // Muestra el modal inmediatamente y activa el overlay de carga
+                $modal.find('#loadingOverlay').show();
+                $modal.find('#editFormContainer').hide();
+                $modal.modal('show');
+                // Lanza la petición AJAX de inmediato
+                $.get(`/cargar-sucursal/${sucursalId}/`)
+                    .done((response) => {
+                        $modal.find('#editar-id_sucursal').val(response.id_sucursal);
+                        $modal.find('#editar-nombre').val(response.nombre);
+                        $modal.find('#editar-direccion').val(response.direccion);
+                        $modal.find('#editar-latitud').val(response.latitud);
+                        $modal.find('#editar-longitud').val(response.longitud);
+                        $modal.find('#editar-id_comuna').val(response.id_comuna || "");
+                        // Configura la URL para actualizar la sucursal
+                        $modal.find('form').attr('action', `/sucursales/${response.id_sucursal}/edit/`);
+                        // Oculta el overlay y muestra el formulario
+                        $modal.find('#loadingOverlay').hide();
+                        $modal.find('#editFormContainer').show();
+                    })
+                    .fail((xhr) => {
+                        this.handleAjaxError(xhr);
+                        $modal.modal('hide');
+                    });
+            }
+            ,
+            refreshSucursalList: function () {
+                $('#tabla_sucursales').load(window.location.href + ' #tabla_sucursales > *');
+            },
+            getCSRFToken: function () {
+                return document.querySelector('[name=csrfmiddlewaretoken]').value;
+            },
+            toggleLoadingState: function (element, isLoading) {
+                const $element = $(element);
+                if ($element.is('form')) {
+                    const $btn = $element.find('button[type="submit"]');
+                    $btn.prop('disabled', isLoading);
+                    $btn.html(isLoading ? '<span class="spinner-border spinner-border-sm"></span>' : 'Guardar');
+                } else {
+                    $element.prop('disabled', isLoading);
+                    $element.html(isLoading ? '<span class="spinner-border spinner-border-sm"></span>' : $element.data('original-text'));
+                }
+            },
+            handleAjaxError: function (xhr) {
+                const errorMessage = xhr.responseJSON?.error || 'Error en la solicitud';
+                alert(`Error: ${errorMessage}`);
+            },
+            buildDetailsContent: function (data) {
+                return `
+                    <div class="row">
+                        <div class="col-md-6">
+                            <p><strong>ID:</strong> ${data.id_sucursal}</p>
+                            <p><strong>Nombre:</strong> ${data.nombre}</p>
+                            <p><strong>Dirección:</strong> ${data.direccion}</p>
+                        </div>
+                        <div class="col-md-6">
+                            <p><strong>Comuna:</strong> ${data.comuna_nombre || 'Sin asignar'}</p>
+                            <div id="mini-map" style="height: 200px; width: 100%;"></div>
+                        </div>
+                    </div>
+                `;
+            },
+            initMap: function (lat, lng) {
+                if (window.miniMap) window.miniMap.remove();
+                window.miniMap = L.map('mini-map').setView([lat, lng], 15);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(window.miniMap);
+                L.marker([lat, lng]).addTo(window.miniMap);
+            },
+            showFormErrors: function ($form, errors) {
+                alert("Existen errores en el formulario, verifique los datos ingresados.");
+            }
+        };
+
+        // RedApoyoHandler: Funcionalidad para la red de apoyo (se incluye el código completo proporcionado)
+        class RedApoyoHandler {
+            /**
+             * Inicializa los manejadores de eventos para la red de apoyo.
+             */
+            static init() {
+                $(document).off('click', '.btn-redApoyo').on('click', '.btn-redApoyo', (e) => {
+                    const sucursalId = $(e.currentTarget).data('sucursal-id');
+                    if (!sucursalId) { console.error('Falta el id de la sucursal'); return; }
+                    $('#redApoyoModal').data('sucursal-id', sucursalId);
+                    const modal = new bootstrap.Modal('#redApoyoModal');
+                    modal.show();
+                    this.cargarRedes(sucursalId);
+                });
+                $('#formRedApoyo').off('submit').on('submit', (e) => {
+                    e.preventDefault();
+                    this.guardarRed();
+                });
+                $('#redApoyoModal').on('hidden.bs.modal', function () {
+                    $(this).removeData('sucursal-id');
+                    $('#formRedApoyo')[0].reset();
+                    $('#listaRedes').empty();
+                });
+                $(document).off('click', '.btn-eliminar-red').on('click', '.btn-eliminar-red', (e) => {
+                    if (!confirm('¿Está seguro de eliminar esta red de apoyo?')) return;
+                    const id_nr = $(e.currentTarget).data('id_nr');
+                    this.eliminarRed(id_nr);
+                });
+            }
+
+            /**
+             * Carga las redes de apoyo asociadas a una sucursal.
+             * @param {number} sucursalId - ID de la sucursal.
+             */
+            static cargarRedes(sucursalId) {
+                $.ajax({
+                    url: `/obtener-redes-apoyo/${sucursalId}/`,
+                    method: 'GET',
+                    success: (data) => { this.mostrarRedes(data.redes); },
+                    error: () => { $('#listaRedes').html('<div class="alert alert-danger">Error al cargar las redes de apoyo.</div>'); }
+                });
+            }
+
+            /**
+             * Muestra en el DOM la lista de redes de apoyo.
+             * @param {Array} redes - Arreglo de objetos con información de cada red.
+             */
+            static mostrarRedes(redes) {
+                const lista = $('#listaRedes');
+                lista.empty();
+                if (redes.length === 0) {
+                    lista.html('<div class="alert alert-info">No hay redes de apoyo registradas.</div>');
+                    return;
+                }
+                redes.forEach((red) => {
+                    lista.append(`
+                        <div class="list-group-item">
+                            <div class="row align-items-center">
+                                <div class="col-md-4"><strong>${red.nombre}</strong></div>
+                                <div class="col-md-4">
+                                    ${red.email ? red.email : '<span class="text-muted">Sin email</span>'}
+                                </div>
+                                <div class="col-md-3">
+                                    ${red.telefono ? red.telefono : '<span class="text-muted">Sin teléfono</span>'}
+                                </div>
+                                <div class="col-md-1 text-end">
+                                    <button class="btn btn-danger btn-sm btn-eliminar-red" data-id_nr="${red.id_nr}" title="Eliminar">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                });
+            }
+
+            /**
+             * Envía una solicitud para guardar una nueva red de apoyo.
+             */
+            static guardarRed() {
+                const sucursalId = $('#redApoyoModal').data('sucursal-id');
+                if (!sucursalId) { console.error('Falta el id de la sucursal'); return; }
+                const nombre = $('#nombreRed').val().trim();
+                const telefono = $('#telefonoRed').val().trim();
+                const email = $('#emailRed').val().trim();
+                if (!nombre) { alert('El nombre es obligatorio'); return; }
+                const btn = $('#btnGuardarRed');
+                btn.prop('disabled', true);
+                btn.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Guardando...');
+                const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+                $.ajax({
+                    url: `/guardar-red-apoyo/${sucursalId}/`,
+                    method: 'POST',
+                    data: {
+                        nombre: nombre,
+                        telefono: telefono,
+                        email: email,
+                        id_usuario: 1, // Hardcodeado temporalmente
+                        csrfmiddlewaretoken: csrfToken
+                    },
+                    success: (data) => {
+                        if (data.success) {
+                            $('#formRedApoyo')[0].reset();
+                            this.cargarRedes(sucursalId);
+                        } else {
+                            alert('Error al guardar la red de apoyo: ' + (data.error || ''));
+                        }
+                    },
+                    error: (xhr, status, error) => {
+                        alert('Error en la solicitud. Intente nuevamente.');
+                        console.error('Error en AJAX:', status, error);
+                    },
+                    complete: () => {
+                        btn.prop('disabled', false);
+                        btn.html('Guardar');
+                    }
+                });
+            }
+
+            /**
+             * Envía una solicitud para eliminar una red de apoyo.
+             * @param {number} id_nr - ID de la red de apoyo a eliminar.
+             */
+            static eliminarRed(id_nr) {
+                const btnEliminar = $(`.btn-eliminar-red[data-id_nr="${id_nr}"]`);
+                btnEliminar.prop('disabled', true);
+                btnEliminar.html('<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>');
+                const csrfToken = $('[name=csrfmiddlewaretoken]').val();
+                $.ajax({
+                    url: `/eliminar-red-apoyo/${id_nr}/`,
+                    method: 'POST',
+                    data: { csrfmiddlewaretoken: csrfToken },
+                    success: (data) => {
+                        if (data.success) {
+                            const sucursalId = $('#redApoyoModal').data('sucursal-id');
+                            this.cargarRedes(sucursalId);
+                        } else {
+                            alert('Error al eliminar la red de apoyo: ' + (data.error || ''));
+                            btnEliminar.prop('disabled', false);
+                            btnEliminar.html('<i class="fas fa-trash-alt"></i>');
+                        }
+                    },
+                    error: (xhr, status, error) => {
+                        alert('Error en la solicitud. Intente nuevamente.');
+                        console.error('Error en AJAX:', status, error);
+                        btnEliminar.prop('disabled', false);
+                        btnEliminar.html('<i class="fas fa-trash-alt"></i>');
+                    }
+                });
+            }
+        }
+
+        // Inicializa SucursalManager y RedApoyoHandler al cargar la página.
+        $(document).ready(() => {
+            SucursalManager.init();
+            RedApoyoHandler.init();
+        });
+    </script>
+
+{% endblock %}

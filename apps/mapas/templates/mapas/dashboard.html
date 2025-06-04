@@ -1,0 +1,476 @@
+{% extends "base.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+<link rel="stylesheet" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
+<style>
+  .dashboard-panel {
+    position: relative;
+    min-height: 560px;
+  }
+
+  #dashboard-loader {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.93);
+    z-index: 22;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+  }
+
+  #dashboard-loader.hide {
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  .kpi-card {
+    background: #fff;
+    border-radius: 16px;
+    box-shadow: 0 2px 18px rgba(26, 32, 56, 0.07);
+    padding: 30px 28px 22px 28px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    margin-bottom: 12px;
+    min-height: 110px;
+  }
+
+  .kpi-card .icon {
+    font-size: 2.3rem;
+    color: #6366f1;
+    background: #eceffd;
+    border-radius: 50%;
+    padding: 16px;
+    min-width: 60px;
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .kpi-card .kpi-label {
+    color: #6a768f;
+    font-size: 1.06em;
+  }
+
+  .kpi-card .kpi-value {
+    font-weight: 900;
+    font-size: 2.1em;
+    color: #242849;
+  }
+
+  .card-panel {
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 2px 24px rgba(28, 30, 60, 0.11);
+    padding: 24px 18px 6px 18px;
+    margin-bottom: 16px;
+  }
+
+  .chart-panel {
+    min-height: 320px;
+    height: 370px;
+  }
+
+  /* Como al inicio */
+  .chart-panel-lg {
+    min-height: 410px;
+    height: 450px;
+  }
+
+  /* Como al inicio */
+  .filtros-dashboard {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: end;
+    margin-bottom: 20px;
+    background: #f9fafc;
+    border-radius: 14px;
+    padding: 14px 22px 8px 18px;
+    box-shadow: 0 1px 4px #ececec;
+  }
+
+  .filtros-dashboard .form-label {
+    font-weight: 600;
+    color: #364474;
+    margin-bottom: 4px;
+  }
+
+  .filtros-dashboard .legend-range {
+    font-weight: 600;
+    color: #6366f1;
+    font-size: 1.08em;
+    margin-left: 18px;
+    background: #eceffd;
+    border-radius: 7px;
+    padding: 7px 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  @media (max-width: 900px) {
+
+    .kpi-card,
+    .card-panel {
+      padding: 16px 8px;
+    }
+
+    .chart-panel,
+    .chart-panel-lg {
+      min-height: 230px;
+      height: 210px;
+    }
+
+    .filtros-dashboard {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4" style="max-width: 1350px;">
+  <div class="dashboard-panel" id="dashboard-panel">
+    <!-- Loader SOLO sobre el dashboard -->
+    <div id="dashboard-loader">
+      <div class="svg-loader-cog">
+        <svg fill="hsl(228, 97%, 42%)" viewBox="0 0 24 24" width="82" height="82" xmlns="http://www.w3.org/2000/svg">
+          <!-- ...SVG ANIMADO... -->
+        </svg>
+        <div class="mt-3 fw-bold text-primary" style="font-size:1.08em;">Cargando dashboard...</div>
+      </div>
+    </div>
+    <!-- FILTROS -->
+    <form id="filtros-dashboard-form" class="filtros-dashboard mb-2">
+      <div>
+        <label class="form-label" for="filtro-fecha-inicio">Fecha inicio</label>
+        <input type="text" class="form-control" id="filtro-fecha-inicio" name="fecha_inicio" required autocomplete="off"
+          style="min-width:110px;">
+      </div>
+      <div>
+        <label class="form-label" for="filtro-fecha-fin">Fecha fin</label>
+        <input type="text" class="form-control" id="filtro-fecha-fin" name="fecha_fin" required autocomplete="off"
+          style="min-width:110px;">
+      </div>
+      <div>
+        <label class="form-label" for="filtro-comuna">Comuna</label>
+        <select class="form-select" id="filtro-comuna" name="id_comuna">
+          <option value="">Todas</option>
+          {% for comuna in comunas %}
+          <option value="{{ comuna.id }}">{{ comuna.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="legend-range" id="legend-rango-fechas">
+        <i class="fas fa-calendar-alt"></i>
+        <span>Mostrando: --</span>
+      </div>
+      <button type="submit" class="btn btn-primary ms-auto" style="height:42px; min-width:120px;">Actualizar</button>
+    </form>
+
+    <!-- KPIs -->
+    <div class="row mb-4">
+      <div class="col-md-3 col-6 mb-3">
+        <div class="kpi-card">
+          <div class="icon"><i class="fas fa-bolt"></i></div>
+          <div>
+            <div class="kpi-label">Eventos hoy</div>
+            <div class="kpi-value" id="kpi-hoy">--</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="kpi-card">
+          <div class="icon"><i class="fas fa-circle-exclamation"></i></div>
+          <div>
+            <div class="kpi-label">Eventos Alta</div>
+            <div class="kpi-value" id="kpi-alta">--</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="kpi-card">
+          <div class="icon"><i class="fas fa-bullhorn"></i></div>
+          <div>
+            <div class="kpi-label">Alertas Activas</div>
+            <div class="kpi-value" id="kpi-activos">--</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-md-3 col-6 mb-3">
+        <div class="kpi-card">
+          <div class="icon"><i class="fas fa-calendar-check"></i></div>
+          <div>
+            <div class="kpi-label">Eventos mes</div>
+            <div class="kpi-value" id="kpi-mes">--</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <!-- Charts Row -->
+    <div class="row">
+      <div class="col-lg-6 mb-4">
+        <div class="card-panel">
+          <div class="fw-bold mb-2"><i class="fas fa-chart-bar me-1"></i> Eventos por Prioridad</div>
+          <div id="bar-prioridad" class="chart-panel"></div>
+        </div>
+      </div>
+      <div class="col-lg-6 mb-4">
+        <div class="card-panel">
+          <div class="fw-bold mb-2"><i class="fas fa-chart-pie me-1"></i> Distribución por Tipo</div>
+          <div id="pie-tipo" class="chart-panel"></div>
+        </div>
+      </div>
+      <div class="col-lg-7 mb-4">
+        <div class="card-panel">
+          <div class="fw-bold mb-2"><i class="fas fa-chart-line me-1"></i> Evolución Últimos Días</div>
+          <div id="line-dia" class="chart-panel"></div>
+        </div>
+      </div>
+      <div class="col-lg-5 mb-4">
+        <div class="card-panel">
+          <div class="fw-bold mb-2"><i class="fas fa-bullseye me-1"></i> Radar Métricas</div>
+          <div id="radar-metricas" class="chart-panel"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Gráfico de eventos por hora (ancho 2 cols) -->
+    <div class="row">
+      <div class="col-12 mb-3">
+        <div class="card-panel">
+          <div class="fw-bold mb-2"><i class="fas fa-clock me-1"></i> Eventos por Hora del Día</div>
+          <div id="bar-horas-eventos" class="chart-panel-lg"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+<script>
+  function showDashboardLoader(show = true) {
+    const loader = document.getElementById('dashboard-loader');
+    if (loader) {
+      if (show) { loader.classList.remove('hide'); loader.style.display = 'flex'; }
+      else { loader.classList.add('hide'); setTimeout(() => { loader.style.display = 'none'; }, 320); }
+    }
+  }
+  function getDefaultDateRange() {
+    const fin = new Date();
+    const inicio = new Date();
+    inicio.setDate(fin.getDate() - 89);
+    return {
+      inicio: inicio.toISOString().slice(0, 10),
+      fin: fin.toISOString().slice(0, 10)
+    };
+  }
+  function setDateFilterInputs(inicio, fin) {
+    document.getElementById('filtro-fecha-inicio').value = inicio;
+    document.getElementById('filtro-fecha-fin').value = fin;
+  }
+  function setRangoLeyenda(fechaInicio, fechaFin) {
+    let el = document.getElementById('legend-rango-fechas');
+    el.querySelector('span').innerText = `Mostrando: ${fechaInicio} a ${fechaFin}`;
+  }
+  function fetchAndRenderDashboard(params = {}) {
+    showDashboardLoader(true);
+    let url = "/dashboard/data/";
+    if (Object.keys(params).length > 0) {
+      url += "?" + new URLSearchParams(params).toString();
+    }
+    fetch(url)
+      .then(resp => resp.json())
+      .then(data => {
+        document.getElementById('kpi-hoy').textContent = data.hoy;
+        document.getElementById('kpi-alta').textContent = data.alta;
+        document.getElementById('kpi-mes').textContent = data.mes;
+        document.getElementById('kpi-activos').textContent = data.alerta_activa;
+        setRangoLeyenda(data.fecha_inicio, data.fecha_fin);
+
+        // === BARRAS: Prioridad
+        let chart = echarts.init(document.getElementById('bar-prioridad'));
+        chart.setOption({
+          legend: { show: false },
+          grid: { left: 40, right: 20, top: 40, bottom: 35, containLabel: true },
+          xAxis: {
+            type: 'category', data: Object.keys(data.prioridad),
+            axisLabel: { color: '#4338ca', fontWeight: 'bold', fontSize: 16 }
+          },
+          yAxis: { type: 'value', axisLine: { show: false }, axisLabel: { color: '#6a768f', fontSize: 14 } },
+          series: [{
+            name: 'Eventos',
+            data: Object.values(data.prioridad),
+            type: 'bar', barWidth: 36,
+            itemStyle: {
+              borderRadius: [6, 6, 0, 0],
+              color: function (params) {
+                return ['#22c55e', '#facc15', '#f43f5e'][params.dataIndex];
+              }
+            },
+            label: { show: true, position: 'top', fontWeight: 800, fontSize: 20, color: '#18181b' }
+          }]
+        });
+
+        // === TORTA: Tipos
+        let pie = echarts.init(document.getElementById('pie-tipo'));
+        let tipoData = Object.keys(data.tipo).map((k, i) => ({
+          value: data.tipo[k], name: k,
+          itemStyle: { color: ['#6366f1', '#38bdf8', '#fbbf24', '#22d3ee', '#a3e635', '#f472b6', '#fb7185', '#fcd34d'][i % 8] }
+        }));
+        pie.setOption({
+          legend: {
+            show: true, type: 'scroll', orient: 'horizontal',
+            bottom: 0, itemWidth: 16, itemHeight: 16,
+            textStyle: { fontSize: 16, color: '#18181b', fontWeight: 600 }
+          },
+          tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+          series: [{
+            name: 'Tipo de Evento',
+            type: 'pie',
+            radius: ['55%', '82%'],
+            avoidLabelOverlap: false,
+            label: { show: true, fontSize: 15, fontWeight: 700 },
+            labelLine: { length: 16, length2: 10 },
+            minAngle: 7,
+            data: tipoData
+          }]
+        });
+
+        // === LÍNEA: Evolución días (semáforo)
+        let linea = echarts.init(document.getElementById('line-dia'));
+        linea.setOption({
+          legend: { show: true, top: 18, right: 30, data: ['Baja', 'Media', 'Alta'], textStyle: { fontSize: 16 } },
+          tooltip: { trigger: 'axis' },
+          grid: { left: 46, right: 28, top: 52, bottom: 40, containLabel: true },
+          xAxis: { type: 'category', data: data.lineaDias.map(d => d.dia), axisLabel: { rotate: 0, fontSize: 13, color: '#6a768f' } },
+          yAxis: { type: 'value', axisLabel: { color: '#6a768f', fontSize: 15 } },
+          series: [
+            {
+              name: 'Baja', data: data.lineaDias.map(d => d.baja),
+              type: 'line', smooth: true, symbol: 'circle', symbolSize: 8,
+              lineStyle: { color: '#22c55e', width: 5 },
+              itemStyle: { color: '#22c55e' }
+            },
+            {
+              name: 'Media', data: data.lineaDias.map(d => d.media),
+              type: 'line', smooth: true, symbol: 'circle', symbolSize: 8,
+              lineStyle: { color: '#facc15', width: 5 },
+              itemStyle: { color: '#facc15' }
+            },
+            {
+              name: 'Alta', data: data.lineaDias.map(d => d.alta),
+              type: 'line', smooth: true, symbol: 'circle', symbolSize: 8,
+              lineStyle: { color: '#f43f5e', width: 5 },
+              itemStyle: { color: '#f43f5e' }
+            }
+          ]
+        });
+
+        // === RADAR
+        let radar = echarts.init(document.getElementById('radar-metricas'));
+        radar.setOption({
+          legend: { show: true, bottom: 9, left: 10, data: ['Eventos'], textStyle: { fontSize: 15 } },
+          radar: {
+            indicator: Object.keys(data.radar).map(label => ({
+              name: label, max: Math.max(...Object.values(data.radar)) + 6
+            })),
+            axisName: { color: '#6366f1', fontWeight: 'bold', fontSize: 15 },
+            axisLine: { lineStyle: { color: '#e5e7eb' } },
+            splitLine: { lineStyle: { color: '#e5e7eb' } },
+            splitArea: { areaStyle: { color: ['#f1f5f9', '#fff'] } },
+            center: ['50%', '50%'], radius: 75
+          },
+          series: [{
+            name: 'Eventos',
+            type: 'radar',
+            data: [{ value: Object.values(data.radar), name: 'Eventos' }],
+            areaStyle: { color: 'rgba(99,102,241,0.17)' },
+            lineStyle: { color: '#38bdf8', width: 3 },
+            symbol: 'circle', symbolSize: 9,
+            itemStyle: { color: '#6366f1' }
+          }]
+        });
+
+        // === BARRAS: Eventos por Hora
+        let chartHoras = echarts.init(document.getElementById('bar-horas-eventos'));
+        chartHoras.setOption({
+          grid: { left: 46, right: 24, top: 30, bottom: 54, containLabel: true },
+          tooltip: {
+            trigger: 'axis',
+            formatter: function (params) {
+              let d = params[0];
+              let hora = d.axisValue.padStart(2, "0");
+              return `<b>${hora}:00 - ${hora}:59</b><br>Cantidad: <b>${d.value}</b>`;
+            }
+          },
+          xAxis: {
+            type: 'category',
+            data: Array.from({ length: 24 }, (_, i) => i.toString().padStart(2, '0')),
+            axisLabel: { color: '#6366f1', fontWeight: 700, fontSize: 16, formatter: function (val) { return `${val}:00`; } },
+            name: "Hora del día",
+            nameLocation: 'middle',
+            nameGap: 36,
+            nameTextStyle: { fontSize: 16, fontWeight: 'bold', color: '#6366f1' }
+          },
+          yAxis: {
+            type: 'value',
+            axisLabel: { color: '#6a768f', fontSize: 15 }
+          },
+          series: [{
+            name: 'Eventos',
+            data: data.eventosPorHora,
+            type: 'bar',
+            barWidth: 22,
+            itemStyle: { borderRadius: [8, 8, 0, 0], color: '#6366f1' },
+            label: {
+              show: true, position: 'top', fontWeight: 700, fontSize: 15, color: '#18181b'
+            }
+          }]
+        });
+
+        window.addEventListener('resize', () => {
+          chart.resize(); pie.resize(); linea.resize(); radar.resize(); chartHoras.resize();
+        });
+      })
+      .catch(err => { alert('Error al cargar datos del dashboard'); })
+      .finally(() => { showDashboardLoader(false); });
+    setTimeout(() => showDashboardLoader(false), 8000);
+  }
+
+  // Inicializar filtros con Flatpickr español y cargar dashboard
+  document.addEventListener('DOMContentLoaded', function () {
+    flatpickr("#filtro-fecha-inicio", { dateFormat: "Y-m-d", locale: "es", maxDate: "today" });
+    flatpickr("#filtro-fecha-fin", { dateFormat: "Y-m-d", locale: "es", maxDate: "today" });
+    const rango = getDefaultDateRange();
+    setDateFilterInputs(rango.inicio, rango.fin);
+    fetchAndRenderDashboard({
+      fecha_inicio: rango.inicio,
+      fecha_fin: rango.fin,
+      id_comuna: ''
+    });
+    document.getElementById('filtros-dashboard-form').addEventListener('submit', function (e) {
+      e.preventDefault();
+      let fi = document.getElementById('filtro-fecha-inicio').value;
+      let ff = document.getElementById('filtro-fecha-fin').value;
+      let comuna = document.getElementById('filtro-comuna').value;
+      fetchAndRenderDashboard({
+        fecha_inicio: fi,
+        fecha_fin: ff,
+        id_comuna: comuna
+      });
+    });
+  });
+</script>
+{% endblock %}

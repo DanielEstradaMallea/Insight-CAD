@@ -1,0 +1,108 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Panel Seguridad{% endblock %}</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Bootstrap SOLO AQUI -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome SOLO AQUI -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <!-- Tu hoja de estilos principal -->
+    <link rel="stylesheet" href="{% static 'css/menu.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body>
+    <!-- Toggle Menu Mobile -->
+    <button class="menu-toggle d-lg-none" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasSidebar"
+        aria-controls="offcanvasSidebar">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Sidebar fijo (Desktop) -->
+    <nav class="sidebar d-none d-lg-flex flex-column">
+        <div>
+            <div class="sidebar-inner">
+                <div class="mb-4 text-center">
+                    <img src="{% static 'img/Logotipo-Insight-positivo.png' %}" alt="Insight Security"
+                        style="max-width: 170px; width: 95%; height: auto; display: block; margin: 0 auto;">
+                </div>
+                {% include "menu/sidebar_items.html" %}
+            </div>
+        </div>
+        <div class="sidebar-footer">
+            <button class="dark-toggle" id="toggleDark" aria-label="Cambiar tema">
+                <i class="fas fa-adjust"></i>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Offcanvas Sidebar (Móvil/Tablet) -->
+    <div class="offcanvas offcanvas-start d-lg-none" tabindex="-1" id="offcanvasSidebar"
+        aria-labelledby="offcanvasSidebarLabel">
+        <div class="offcanvas-header">
+            <img src="{% static 'img/Logotipo-Insight-positivo.png' %}" alt="Insight Security"
+                style="max-width: 170px; width: 95%; height: auto; display: block; margin: 0 auto;"
+                class="d-none d-lg-block">
+            <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="offcanvas"
+                aria-label="Cerrar"></button>
+        </div>
+        <div class="offcanvas-body d-flex flex-column justify-content-between p-0">
+            <div style="overflow-y:auto;max-height:calc(100vh - 70px);scrollbar-width:none;-ms-overflow-style:none;">
+                {% include "menu/sidebar_items.html" %}
+            </div>
+            <button class="dark-toggle" id="toggleDark" aria-label="Cambiar tema">
+                <i class="fas fa-adjust"></i>
+            </button>
+        </div>
+    </div>
+
+
+    <!-- Main Content (TODO el contenido, sin dejar espacio arriba) -->
+    <div class="main-content">
+    <div class="profile-box dropdown">
+    <img src="https://cdn-icons-png.flaticon.com/512/219/219983.png" 
+         alt="Perfil"
+         class="profile-img dropdown-toggle"
+         id="profileDropdown"
+      
+         aria-expanded="false">
+    <span class="profile-name d-none d-md-inline">
+        {% if user.is_authenticated %}
+            {% if user.get_full_name %}{{ user.get_full_name }}{% else %}{{ user.username }}{% endif %}
+        {% endif %}
+    </span>
+    <i class="fa-solid fa-caret-down d-none d-md-inline dropdown-toggle"
+       data-bs-toggle="dropdown"
+       aria-expanded="false"></i>
+    <ul class="dropdown-menu dropdown-menu-end animate__animated animate__fadeIn" aria-labelledby="profileDropdown">
+        <li>
+            <a class="dropdown-item" href="#"><i class="fas fa-user"></i> Mi Perfil</a>
+        </li>
+        <li>
+            <a class="dropdown-item" href="#"><i class="fas fa-cog"></i> Ajustes</a>
+        </li>
+        <li><hr class="dropdown-divider"></li>
+        <li>
+            <a class="dropdown-item text-danger" href="#"><i class="fas fa-sign-out-alt"></i> Cerrar sesión</a>
+        </li>
+    </ul>
+</div>
+
+    {% block content %}{% endblock %}
+</div>
+
+
+   <!-- Bootstrap y FontAwesome JS SOLO AQUI -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+    <!-- Tu JS global -->
+    <script src="{% static 'js/menu.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

@@ -1,0 +1,44 @@
+.form-control:focus {
+    border-color: #4763a5;
+    box-shadow: 0 0 0 1px #35477d1a;
+}
+label.form-label {
+    color: #3c436a;
+    font-weight: 500;
+    margin-bottom: 0.22rem;
+}
+/* Botones en el contenido del panel */
+.tab-content .table .btn,
+.tab-content .btn {
+    border-radius: 22px;
+    padding: 6px 14px;
+    font-size: 15px;
+    font-weight: 500;
+}
+.tab-content .btn-outline-primary {
+    border-color: #4763a5;
+    color: #4763a5;
+}
+.tab-content .btn-outline-primary:hover,
+.tab-content .btn-outline-primary:focus {
+    background: #4763a5;
+    color: #fff;
+    border-color: #4763a5;
+}
+.tab-content .btn-success {
+    background: linear-gradient(90deg, #41cf7c 0%, #269959 100%);
+    border: none;
+}
+.tab-content .btn-success:disabled {
+    background: #c4e6d5 !important;
+    color: #4763a5 !important;
+}
+.tab-content .btn-secondary {
+    background: #e8eaf2 !important;
+    color: #35477d !important;
+    border: none;
+}
+.table th,
+.table td {
+    vertical-align: middle;
+}

@@ -1,0 +1,352 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<style>
+  .volt-header { background: #23283a; border-radius: 12px 12px 0 0; padding: 2rem 2.2rem 1rem 2.2rem; display: flex; align-items: center; color: #fff; margin-bottom: 0; }
+  .volt-header h1 { margin: 0; font-weight: 700; font-size: 2rem; letter-spacing: .01em; }
+  .volt-btn-institucional { background: #23283a; color: #fff !important; font-weight: 600; border-radius: 6px; border: none; transition: background 0.2s; }
+  .volt-btn-institucional:hover, .volt-btn-institucional:focus { background: #0e2d50; color: #fff !important; border: none; }
+  .volt-table th { background: #23283a !important; color: #fff !important; font-weight: 600; text-align: center; }
+  .volt-table td { vertical-align: middle; text-align: center; }
+  .btn-acciones { display: flex; gap: 0.4rem; justify-content: center; }
+  .card-volt { box-shadow: 0 3px 16px rgba(17, 54, 98, 0.06); border-radius: 12px; border: none; margin-bottom: 3rem; }
+  .badge-success { background: #38a535; color: #fff; }
+  .badge-danger { background: #dc3545; color: #fff; }
+  .modal-header { background: #23283a; color: #fff; border-radius: 12px 12px 0 0; }
+  .modal-title { font-weight: 600; }
+  .modal-footer { border-top: 1px solid #f0f0f0; }
+</style>
+
+<div class="container mt-5">
+  <div class="volt-header mb-0">
+    <h1><i class="fa-solid fa-microchip me-2"></i> Dispositivos</h1>
+  </div>
+  <div class="d-flex align-items-center justify-content-between py-3"
+    style="background: #fff; border-radius: 0 0 10px 10px; box-shadow:0 2px 8px rgba(17,54,98,.05);">
+    <button class="btn volt-btn-institucional px-4 py-2" data-bs-toggle="modal" data-bs-target="#addDispositivoModal">
+      <i class="fas fa-plus"></i> Nuevo Dispositivo
+    </button>
+  </div>
+  <div class="card card-volt p-3 mt-0">
+    <table class="table table-striped align-middle volt-table" id="tabla_dispositivos" style="width:100%">
+      <thead>
+        <tr>
+          <th>Número de Serie</th>
+          <th>Tipo</th>
+          <th>Teléfono</th>
+          <th>Compañía SIM</th>
+          <th>Tipo SIM</th>
+          <th>End Point 1</th>
+          <th>End Point 2</th>
+          <th style="width:110px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for disp in page_obj %}
+        <tr data-id="{{ disp.id_dispositivo }}">
+          <td>{{ disp.numero_serie }}</td>
+          <td>{{ disp.id_tipo_dispositivo.nombre }}</td>
+          <td>{{ disp.telefono }}</td>
+          <td>{{ disp.id_compania_sim.nombre }}</td>
+          <td>{{ disp.id_tipo_sim.nombre }}</td>
+          <td>{{ disp.endpoint_1 }}</td>
+          <td>{{ disp.endpoint_2 }}</td>
+          <td>
+            <div class="btn-acciones">
+              <button class="btn btn-warning btn-sm btn-edit-dispositivo"
+                data-id="{{ disp.id_dispositivo }}"
+                data-numero_serie="{{ disp.numero_serie }}"
+                data-tipo="{{ disp.id_tipo_dispositivo.id_tipo_dispositivo }}"
+                data-telefono="{{ disp.telefono }}"
+                data-compania="{{ disp.id_compania_sim.id_compania_sim }}"
+                data-tipo_sim="{{ disp.id_tipo_sim.id_tipo_sim }}"
+                data-endpoint1="{{ disp.endpoint_1 }}"
+                data-endpoint2="{{ disp.endpoint_2 }}"
+                data-bs-toggle="modal" data-bs-target="#editDispositivoModal">
+                <i class="fas fa-edit"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL AGREGAR -->
+<div class="modal fade" id="addDispositivoModal" tabindex="-1" aria-labelledby="addDispositivoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="formAgregarDispositivo" method="post" action="{% url 'dispositivo:agregar_dispositivo' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Ingresar Dispositivo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Número de serie *</label>
+              <input type="text" class="form-control" name="numero_serie" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipo de dispositivo *</label>
+              <select class="form-select" name="id_tipo_dispositivo" required>
+                <option value="">--Seleccione--</option>
+                {% for tipo in tipos %}
+                  <option value="{{ tipo.id_tipo_dispositivo }}">{{ tipo.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Teléfono</label>
+              <input type="text" class="form-control" name="telefono">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Compañía SIM</label>
+              <select class="form-select" name="id_compania_sim">
+                <option value="">--Seleccione--</option>
+                {% for compania in companias %}
+                  <option value="{{ compania.id_compania_sim }}">{{ compania.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipo SIM</label>
+              <select class="form-select" name="id_tipo_sim">
+                <option value="">--Seleccione--</option>
+                {% for sim in tipos_sim %}
+                  <option value="{{ sim.id_tipo_sim }}">{{ sim.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">End Point 1</label>
+              <input type="text" class="form-control" name="endpoint_1">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">End Point 2</label>
+              <input type="text" class="form-control" name="endpoint_2">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn volt-btn-institucional">Grabar Datos</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="modal fade" id="editDispositivoModal" tabindex="-1" aria-labelledby="editDispositivoModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form id="formEditarDispositivo" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Dispositivo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editIdDispositivo" name="id_dispositivo">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Número de serie *</label>
+              <input type="text" class="form-control" name="numero_serie" id="editNumeroSerie" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipo de dispositivo *</label>
+              <select class="form-select" name="id_tipo_dispositivo" id="editTipoDispositivo" required>
+                <option value="">--Seleccione--</option>
+                {% for tipo in tipos %}
+                  <option value="{{ tipo.id_tipo_dispositivo }}">{{ tipo.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Teléfono</label>
+              <input type="text" class="form-control" name="telefono" id="editTelefono">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Compañía SIM</label>
+              <select class="form-select" name="id_compania_sim" id="editCompaniaSim">
+                <option value="">--Seleccione--</option>
+                {% for compania in companias %}
+                  <option value="{{ compania.id_compania_sim }}">{{ compania.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Tipo SIM</label>
+              <select class="form-select" name="id_tipo_sim" id="editTipoSim">
+                <option value="">--Seleccione--</option>
+                {% for sim in tipos_sim %}
+                  <option value="{{ sim.id_tipo_sim }}">{{ sim.nombre }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">End Point 1</label>
+              <input type="text" class="form-control" name="endpoint_1" id="editEndpoint1">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">End Point 2</label>
+              <input type="text" class="form-control" name="endpoint_2" id="editEndpoint2">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn volt-btn-institucional">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+let table;
+$(document).ready(function () {
+  table = $('#tabla_dispositivos').DataTable({
+    language: {
+      "search": "Buscar:",
+      "lengthMenu": "Mostrar _MENU_ registros",
+      "zeroRecords": "No se encontraron resultados",
+      "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+      "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+      "infoFiltered": "(filtrado de _MAX_ registros en total)",
+      "paginate": {
+        "first": "Primero",
+        "last": "Último",
+        "next": "Siguiente",
+        "previous": "Anterior"
+      }
+    }
+  });
+
+  // ABRIR MODAL EDITAR Y CARGAR DATOS
+  $('#tabla_dispositivos').on('click', '.btn-edit-dispositivo', function () {
+    $('#editIdDispositivo').val($(this).data('id'));
+    $('#editNumeroSerie').val($(this).data('numero_serie'));
+    $('#editTipoDispositivo').val($(this).data('tipo'));
+    $('#editTelefono').val($(this).data('telefono'));
+    $('#editCompaniaSim').val($(this).data('compania'));
+    $('#editTipoSim').val($(this).data('tipo_sim'));
+    $('#editEndpoint1').val($(this).data('endpoint1'));
+    $('#editEndpoint2').val($(this).data('endpoint2'));
+    $('#formEditarDispositivo').attr('action', '/editar_dispositivo/' + $(this).data('id') + '/');
+  });
+
+  // AGREGAR DISPOSITIVO
+  $('#formAgregarDispositivo').submit(function(e){
+    e.preventDefault();
+    var $form = $(this);
+    var $submitBtn = $form.find('button[type="submit"]');
+    $submitBtn.prop('disabled', true);
+
+    $.ajax({
+      type: 'POST',
+      url: $form.attr('action'),
+      data: $form.serialize(),
+      success: function(response){
+        if(response.success){
+          $('#addDispositivoModal').modal('hide');
+          let disp = response.dispositivo;
+          let nuevaFila = table.row.add([
+            disp.numero_serie,
+            disp.tipo,
+            disp.telefono,
+            disp.compania,
+            disp.tipo_sim,
+            disp.endpoint_1,
+            disp.endpoint_2,
+            `<div class="btn-acciones">
+              <button class="btn btn-warning btn-sm btn-edit-dispositivo"
+                data-id="${disp.id}"
+                data-numero_serie="${disp.numero_serie}"
+                data-tipo="${disp.id_tipo_dispositivo}"
+                data-telefono="${disp.telefono}"
+                data-compania="${disp.id_compania_sim}"
+                data-tipo_sim="${disp.id_tipo_sim}"
+                data-endpoint1="${disp.endpoint_1}"
+                data-endpoint2="${disp.endpoint_2}"
+                data-bs-toggle="modal"
+                data-bs-target="#editDispositivoModal">
+                <i class="fas fa-edit"></i>
+              </button>
+            </div>`
+          ]).draw().node();
+          $(nuevaFila).attr('data-id', disp.id);
+          $form[0].reset();
+        }else{
+          alert("Error al agregar dispositivo: " + JSON.stringify(response.errors));
+        }
+      },
+      error: function(){
+        alert("Error inesperado al agregar dispositivo.");
+      },
+      complete: function(){
+        $submitBtn.prop('disabled', false);
+      }
+    });
+  });
+
+  // EDITAR DISPOSITIVO
+  $('#formEditarDispositivo').submit(function(e){
+    e.preventDefault();
+    var $form = $(this);
+    var idDisp = $('#editIdDispositivo').val();
+    var $submitBtn = $form.find('button[type="submit"]');
+    $submitBtn.prop('disabled', true);
+
+    $.ajax({
+      type: 'POST',
+      url: $form.attr('action'),
+      data: $form.serialize(),
+      success: function(response){
+        if(response.success){
+          $('#editDispositivoModal').modal('hide');
+          $('#tabla_dispositivos tbody tr').each(function(){
+            if($(this).attr('data-id') == idDisp){
+              let disp = response.dispositivo;
+              let $tds = $(this).find('td');
+              $tds.eq(0).text(disp.numero_serie);
+              $tds.eq(1).text(disp.tipo);
+              $tds.eq(2).text(disp.telefono);
+              $tds.eq(3).text(disp.compania);
+              $tds.eq(4).text(disp.tipo_sim);
+              $tds.eq(5).text(disp.endpoint_1);
+              $tds.eq(6).text(disp.endpoint_2);
+              let btn = $(this).find('.btn-edit-dispositivo');
+              btn.data('numero_serie', disp.numero_serie);
+              btn.data('tipo', disp.id_tipo_dispositivo);
+              btn.data('telefono', disp.telefono);
+              btn.data('compania', disp.id_compania_sim);
+              btn.data('tipo_sim', disp.id_tipo_sim);
+              btn.data('endpoint1', disp.endpoint_1);
+              btn.data('endpoint2', disp.endpoint_2);
+            }
+          });
+        }else{
+          alert("Error al editar dispositivo: " + JSON.stringify(response.errors));
+        }
+      },
+      error: function(){
+        alert("Error inesperado al editar dispositivo.");
+      },
+      complete: function(){
+        $submitBtn.prop('disabled', false);
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

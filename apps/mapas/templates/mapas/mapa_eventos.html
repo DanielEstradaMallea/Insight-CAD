@@ -1,0 +1,318 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div
+  style="height:100vh;position:relative;overflow:hidden;font-family: 'Inter', Arial, sans-serif; background: #f7f8fc;">
+  <!-- MAPA -->
+  <div id="map" style="height:100vh;width:100vw;position:fixed;left:0;top:0;z-index:1;"></div>
+
+  <!-- Panel de filtros flotante -->
+  <aside id="filter-container" style="
+      position: absolute; top: 70px; left: 32px; z-index: 50;
+      background: rgba(255,255,255,0.97); border-radius: 16px; box-shadow: 0 8px 36px rgba(28,32,90,0.12);
+      padding: 22px 20px 18px 20px; max-width:340px; min-width:245px; transition:box-shadow .18s;">
+    <div style="display:flex; align-items:center; gap:9px; margin-bottom:7px;">
+      <i class="fas fa-filter text-primary"></i>
+      <h5 style="margin:0;font-weight:800;font-size:1.19em;color:#28284a;">Filtrar eventos</h5>
+    </div>
+    <form id="filters-form">
+      <label class="form-label mt-2 mb-1" for="f_inicio">Desde</label>
+      <input type="date" id="f_inicio" class="form-control mb-2" style="font-size:1.04em;">
+      <label class="form-label mb-1" for="f_fin">Hasta</label>
+      <input type="date" id="f_fin" class="form-control mb-2" style="font-size:1.04em;">
+      <label class="form-label mb-1" for="filter_subtipo">Subtipo</label>
+      <select id="filter_subtipo" class="form-select mb-2">
+        <option value="all">Todos</option>
+        {% for st in subtipos %}
+        <option value="{{ st.id_subtipo }}">{{ st.nombre }}</option>
+        {% endfor %}
+      </select>
+      <label class="form-label mb-1" for="filter_prioridad">Prioridad</label>
+      <select id="filter_prioridad" class="form-select mb-2">
+        <option value="all">Todas</option>
+        <option value="Baja">Baja</option>
+        <option value="Media">Media</option>
+        <option value="Alta">Alta</option>
+      </select>
+      <label class="form-label mb-1" for="filter_procedencia">Procedencia</label>
+      <select id="filter_procedencia" class="form-select mb-2">
+        <option value="all">Todas</option>
+        {% for pc in procedencias %}
+        <option value="{{ pc.id_procedencia }}">{{ pc.nombre }}</option>
+        {% endfor %}
+      </select>
+      <label class="form-label mb-1" for="filter_empresa">Empresa</label>
+      <select id="filter_empresa" class="form-select mb-2">
+        <option value="all">Todas</option>
+        {% for e in empresas %}
+        <option value="{{ e.id_empresa }}">{{ e.nombre }}</option>
+        {% endfor %}
+      </select>
+      <label class="form-label mb-1" for="filter_sucursal">Sucursal</label>
+      <select id="filter_sucursal" class="form-select mb-3">
+        <option value="all">Todas</option>
+        {% for s in sucursales %}
+        <option value="{{ s.id_sucursal }}">{{ s.nombre }}</option>
+        {% endfor %}
+      </select>
+      <button id="applyFilters" class="btn btn-primary w-100 fw-bold" style="font-size:1.09em;height:39px;">
+        <i class="fas fa-search me-1"></i> Buscar
+      </button>
+    </form>
+  </aside>
+
+  <!-- Controles de dibujo -->
+  <div id="drawing-controls" style="
+      position:absolute;top:18px;left:50%;transform:translateX(-50%);
+      z-index:60; background:rgba(38,47,102,0.97);padding:10px 28px 8px 20px;
+      border-radius:13px;display:flex;gap:18px;box-shadow:0 2px 12px rgba(28,32,90,0.14)">
+    <button id="startDrawing" class="btn btn-sm btn-link" title="Iniciar Dibujo" style="color:#fff;"><i
+        class="fas fa-pencil-alt"></i></button>
+    <button id="finishDrawing" class="btn btn-sm btn-link" title="Finalizar Dibujo" disabled style="color:#fff;"><i
+        class="fas fa-check"></i></button>
+    <button id="clearDrawing" class="btn btn-sm btn-link" title="Limpiar Dibujo" style="color:#fff;"><i
+        class="fas fa-times"></i></button>
+    <span style="color:#fff; font-weight:600;font-size:1.05em; margin-left:12px;">Dibuja un área para filtrar
+      eventos</span>
+  </div>
+
+  <!-- Modal para eventos dentro del polígono -->
+  <div class="modal fade" id="clusterModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+      <div class="modal-content">
+        <div class="modal-header bg-primary text-white">
+          <h5 class="modal-title"><i class="fas fa-map-pin"></i> Eventos en área seleccionada</h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body p-3" style="max-height:65vh; overflow-y:auto;">
+          <div class="table-responsive">
+            <table class="table table-bordered align-middle mb-0" id="modalTable">
+              <thead class="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Nombre</th>
+                  <th>Tipo</th>
+                  <th>Subtipo</th>
+                  <th>Fecha</th>
+                  <th>Hora</th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button id="exportBtn" class="btn btn-success"><i class="fas fa-file-excel me-1"></i> Exportar Excel</button>
+          <button class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Google Maps, MarkerClusterer y Bootstrap JS -->
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDBEtk__sGNmNnvoWuZ3oiJgKhtSnlseIs&libraries=geometry"></script>
+<script src="https://unpkg.com/@googlemaps/markerclusterer/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  let map, markers = [], allData = [], cluster;
+  let drawingMode = false, polygonCoordinates = [], customPolygon = null, mapClickListener = null;
+  let firstVertexMarker = null;
+
+  // PRE-CARGA DE FECHAS AL ABRIR
+  function setDefaultDateRange() {
+    const fin = new Date();
+    const inicio = new Date();
+    inicio.setFullYear(fin.getFullYear() - 1);
+    document.getElementById('f_inicio').value = inicio.toISOString().slice(0, 10);
+    document.getElementById('f_fin').value = fin.toISOString().slice(0, 10);
+  }
+
+  function initMap() {
+    map = new google.maps.Map(document.getElementById("map"), {
+      center: { lat: -33.45, lng: -70.66 }, zoom: 6, minZoom: 4, styles: [
+        { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] },
+        { featureType: "transit", stylers: [{ visibility: "off" }] }
+      ]
+    });
+    cluster = new markerClusterer.MarkerClusterer({ map });
+    loadEventos();
+  }
+
+  function loadEventos() {
+    const p = new URLSearchParams({
+      fecha_inicio: document.getElementById('f_inicio').value,
+      fecha_fin: document.getElementById('f_fin').value,
+      subtipo: document.getElementById('filter_subtipo').value,
+      prioridad: document.getElementById('filter_prioridad').value,
+      procedencia: document.getElementById('filter_procedencia').value,
+      empresa: document.getElementById('filter_empresa').value,
+      sucursal: document.getElementById('filter_sucursal').value
+    });
+    fetch("{% url 'mapa:api_eventos' %}?" + p)
+      .then(r => r.json())
+      .then(({ eventos }) => {
+        allData = eventos;
+        markers.forEach(m => m.setMap(null)); markers = [];
+        const infoWindow = new google.maps.InfoWindow();
+        eventos.forEach(ev => {
+          const marker = new google.maps.Marker({
+            position: { lat: ev.lat, lng: ev.lng },
+            title: ev.nombre,
+            map: map
+          });
+          marker.addListener('click', function () {
+            infoWindow.setContent(`
+              <div>
+                <h6>${ev.nombre}</h6>
+                <p><strong>ID:</strong> ${ev.id}</p>
+                <p><strong>Tipo:</strong> ${ev.tipo}</p>
+                <p><strong>Subtipo:</strong> ${ev.subtipo}</p>
+                <p><strong>Fecha:</strong> ${ev.fecha}</p>
+                <p><strong>Hora:</strong> ${ev.hora}</p>
+              </div>
+            `);
+            infoWindow.open(map, marker);
+          });
+          markers.push(marker);
+        });
+        cluster.clearMarkers(); cluster.addMarkers(markers);
+      });
+  }
+
+  function addVertex(event) {
+    if (!drawingMode) return;
+    const latLng = event.latLng;
+    polygonCoordinates.push(latLng);
+
+    if (polygonCoordinates.length === 1) {
+      if (firstVertexMarker) firstVertexMarker.setMap(null);
+      firstVertexMarker = new google.maps.Marker({
+        position: latLng,
+        map: map,
+        icon: {
+          path: google.maps.SymbolPath.CIRCLE,
+          scale: 7,
+          fillColor: "#22c55e",
+          fillOpacity: 0.8,
+          strokeColor: "#185a20",
+          strokeWeight: 2
+        },
+        title: "Haz click aquí para cerrar el área"
+      });
+      firstVertexMarker.addListener('click', finishPolygonByMarker);
+    }
+    if (polygonCoordinates.length > 2 &&
+        google.maps.geometry.spherical.computeDistanceBetween(latLng, polygonCoordinates[0]) < 24) {
+      finishPolygonByMarker();
+      return;
+    }
+    if (customPolygon) {
+      customPolygon.setPath(polygonCoordinates);
+    } else {
+      customPolygon = new google.maps.Polygon({
+        paths: polygonCoordinates,
+        strokeColor: '#08f',
+        strokeOpacity: 0.9,
+        strokeWeight: 2,
+        fillColor: '#6366f1',
+        fillOpacity: 0.22,
+        map: map
+      });
+    }
+  }
+
+  function finishPolygonByMarker() {
+    drawingMode = false;
+    map.setOptions({ draggableCursor: '' });
+    if (mapClickListener) {
+      google.maps.event.clearListeners(map, 'click');
+      mapClickListener = null;
+    }
+    document.getElementById('finishDrawing').disabled = true;
+    if (customPolygon) {
+      customPolygon.setOptions({
+        fillColor: '#4ade80',
+        fillOpacity: 0.18,
+        strokeColor: "#22c55e"
+      });
+    }
+    if (firstVertexMarker) {
+      firstVertexMarker.setMap(null);
+      firstVertexMarker = null;
+    }
+    filterEventosInPolygon();
+  }
+
+  document.getElementById('startDrawing').onclick = () => {
+    drawingMode = true; polygonCoordinates = [];
+    if (customPolygon) { customPolygon.setMap(null); customPolygon = null; }
+    if (firstVertexMarker) { firstVertexMarker.setMap(null); firstVertexMarker = null; }
+    document.getElementById('finishDrawing').disabled = false;
+    map.setOptions({ draggableCursor: 'crosshair' });
+    mapClickListener = map.addListener('click', addVertex);
+  };
+
+  document.getElementById('finishDrawing').onclick = () => {
+    finishPolygonByMarker();
+  };
+
+  document.getElementById('clearDrawing').onclick = () => {
+    drawingMode = false; polygonCoordinates = [];
+    if (customPolygon) { customPolygon.setMap(null); customPolygon = null; }
+    if (firstVertexMarker) { firstVertexMarker.setMap(null); firstVertexMarker = null; }
+    if (mapClickListener) { google.maps.event.clearListeners(map, 'click'); mapClickListener = null; }
+    map.setOptions({ draggableCursor: '' });
+  };
+
+  function filterEventosInPolygon() {
+    if (!customPolygon) return;
+    const inside = allData.filter(ev =>
+      google.maps.geometry.poly.containsLocation(new google.maps.LatLng(ev.lat, ev.lng), customPolygon)
+    );
+    const tbody = document.querySelector('#modalTable tbody');
+    tbody.innerHTML = '';
+    inside.forEach(ev => {
+      tbody.insertAdjacentHTML('beforeend', `
+        <tr>
+          <td>${ev.id}</td>
+          <td>${ev.nombre}</td>
+          <td>${ev.tipo}</td>
+          <td>${ev.subtipo}</td>
+          <td>${ev.fecha}</td>
+          <td>${ev.hora}</td>
+        </tr>
+      `);
+    });
+    window._clusterData = inside;
+    new bootstrap.Modal(document.getElementById('clusterModal')).show();
+  }
+
+  document.getElementById('filters-form').onsubmit = (e) => {
+    e.preventDefault();
+    if (customPolygon) { customPolygon.setMap(null); customPolygon = null; }
+    if (firstVertexMarker) { firstVertexMarker.setMap(null); firstVertexMarker = null; }
+    loadEventos();
+  };
+  document.getElementById('exportBtn').onclick = () => {
+    fetch("{% url 'mapa:export_cluster_excel' %}", {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': getCookie('csrftoken') },
+      body: JSON.stringify({ eventos: window._clusterData })
+    }).then(r => r.blob()).then(blob => {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); a.href = url; a.download = "cluster_eventos.xlsx"; a.click();
+    });
+  };
+  function getCookie(name) {
+    let v = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)'); return v ? v.pop() : '';
+  }
+
+  // PRE-CARGA fechas Y luego inicia mapa
+  window.onload = function() {
+    setDefaultDateRange();
+    initMap();
+  };
+</script>
+{% endblock %}

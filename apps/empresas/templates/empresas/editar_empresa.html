@@ -1,0 +1,145 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="container py-4" style="max-width:1200px;">
+    <!-- Card principal -->
+    <div class="card mt-5 shadow-sm border-0 ">
+        <!-- Título azul institucional -->
+        <div class="card-header py-4" style="background: #113662; border-bottom: none; border-radius: 12px 12px 0 0;">
+            <h3 class="mb-0 fw-semibold text-white" style="font-size:1.7rem;">
+                <i class="fa-solid fa-building me-2"></i>
+                Editar Empresa
+            </h3>
+        </div>
+        <div class="card-body bg-white">
+            <form method="post" autocomplete="off" novalidate>
+                {% csrf_token %}
+                <!-- Datos principales -->
+                <h5 class="fw-bold mb-3" style="font-size:1.2rem;">Datos principales</h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small mb-1">Nombre Empresa</label>
+                        {{ form.nombre }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small mb-1">RUT Empresa</label>
+                        {{ form.rut }}
+                        <div id="rut-error" class="error-message text-danger small mt-1" style="display:none;">RUT inválido.</div>
+                    </div>
+                </div>
+                <!-- Representante -->
+                <h5 class="fw-bold mb-3 mt-4" style="font-size:1.2rem;">Representante</h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Nombre Representante</label>
+                        {{ form.nombre_representante }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Teléfono Representante</label>
+                        {{ form.telefono_representante }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Email Representante</label>
+                        {{ form.email_representante }}
+                    </div>
+                </div>
+                <!-- Estado y observaciones -->
+                <h5 class="fw-bold mb-3 mt-4" style="font-size:1.2rem;">Otros datos</h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Estado</label>
+                        {{ form.activo }}
+                    </div>
+                    <div class="col-md-8">
+                        <label class="form-label small mb-1">Observaciones</label>
+                        {{ form.observaciones }}
+                    </div>
+                </div>
+                <!-- Botones -->
+                <div class="d-flex justify-content-end gap-3 mt-4">
+                    <a href="{% url 'empresa:list-empresas' %}" class="btn btn-secondary px-5 py-2" style="font-size:1rem;">
+                        <i class="fas fa-times me-2"></i> Cancelar
+                    </a>
+                    <button type="submit" class="btn btn-primary px-5 py-2" style="font-size:1rem;">
+                        <i class="fas fa-save me-2"></i> Guardar Cambios
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    // Validación de RUT ajax si es necesario
+    $(document).ready(function () {
+        const rutInput = $('#id_rut');
+        const errorDiv = $('#rut-error');
+        let debounceTimer;
+        rutInput.on('input', function () {
+            clearTimeout(debounceTimer);
+            const rutValue = rutInput.val().trim();
+            if (rutValue === '') {
+                errorDiv.hide();
+                return;
+            }
+            debounceTimer = setTimeout(function () {
+                $.ajax({
+                    url: "{% url 'empresa:validar_rut_ajax' %}", // Cambia según tu URL
+                    method: 'POST',
+                    data: {
+                        rut: rutValue,
+                        csrfmiddlewaretoken: '{{ csrf_token }}'
+                    },
+                    success: function (response) {
+                        if (response.valido) {
+                            errorDiv.hide();
+                        } else {
+                            errorDiv.text(response.mensaje);
+                            errorDiv.show();
+                        }
+                    },
+                    error: function () {
+                        errorDiv.text('Error al validar el RUT.');
+                        errorDiv.show();
+                    },
+                });
+            }, 300);
+        });
+    });
+</script>
+<style>
+    .form-label {
+        font-size: 0.96rem !important;
+        font-weight: 600;
+        color: #353b4a;
+    }
+    .form-control, .form-select, textarea {
+        font-size: 0.92rem !important;
+        border-radius: 7px;
+        min-height: 38px !important;
+    }
+    .btn-primary {
+        background-color: #113662;
+        border: none;
+    }
+    .btn-primary:hover, .btn-primary:focus {
+        background-color: #0e2d50;
+        border: none;
+    }
+    .btn-secondary {
+        background: #f3f5f8;
+        color: #113662;
+        border: none;
+        font-weight: 600;
+    }
+    .btn-secondary:hover, .btn-secondary:focus {
+        background: #dde4ef;
+        color: #0e2d50;
+    }
+    .card-header {
+        background: #113662 !important;
+    }
+</style>
+{% endblock %}
