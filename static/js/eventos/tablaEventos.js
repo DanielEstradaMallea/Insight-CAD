@@ -52,11 +52,11 @@
                     data: 'estado', render: function (data, type, row) {
                         let estadoClass = '';
                         switch (data) {
-                            case 'INGRESADO': estadoClass = 'bg-success text-light'; break;
-                            case 'ABIERTO': estadoClass = 'bg-warning text-dark'; break;
-                            case 'CERRADO': estadoClass = 'bg-secondary'; break;
-                            case 'EN PROCESO': estadoClass = 'bg-danger text-light'; break;
-                            default: estadoClass = 'bg-warning';
+                            case 'ABIERTO': estadoClass = 'bg-success text-light'; break;
+                            case 'EN PROCESO': estadoClass = 'bg-warning text-dark'; break;
+                            case 'FINALIZADO': estadoClass = 'bg-secondary'; break;
+                            case 'INGRESADO': estadoClass = 'bg-dark text-light'; break;
+                            default: estadoClass = 'bg-info';
                         }
                         return `<span class="btn btn-sm btn-estado ${estadoClass}" 
                             data-evento-id="${row.id_evento}" 

@@ -20,7 +20,7 @@
 .btn-reportar-evento {
     position: fixed;
     right: 36px;
-    bottom: 36px;
+    top: 56px;
     z-index: 2000;
     background: linear-gradient(90deg, #dc3030 0%, #e6b9b5 100%);
     color: #fff;
