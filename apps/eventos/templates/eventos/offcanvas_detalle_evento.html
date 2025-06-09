@@ -1,0 +1,205 @@
+<!-- Backdrop -->
+<div id="custom-offcanvas-backdrop" style="display:none;"></div>
+
+<!-- Offcanvas Detalle Evento -->
+<div id="custom-offcanvas-detalle">
+    <div class="custom-offcanvas-header d-flex align-items-center justify-content-between p-4">
+        <div>
+            <h4 id="detalle-nombre-header" class="mb-1 fw-bold">-</h4>
+            <div class="small text-white-50" id="detalle-fechas"></div>
+        </div>
+        <button class="btn-close btn-close-white" id="cerrarDetalleEvento" aria-label="Cerrar"></button>
+    </div>
+    <div class="offcanvas-body p-4">
+        <ul class="nav nav-underline mb-4 custom-tabs-underline" id="detalleTabs" role="tablist">
+            <li class="nav-item">
+                <button class="nav-link active" id="tab-detalle" data-bs-toggle="tab" data-bs-target="#detalle-content"
+                    type="button" role="tab">Detalle</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="tab-imagenes" data-bs-toggle="tab" data-bs-target="#imagenes-content"
+                    type="button" role="tab">Imágenes</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="tab-antecedentes" data-bs-toggle="tab"
+                    data-bs-target="#antecedentes-content" type="button" role="tab">Antecedentes</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="tab-personas" data-bs-toggle="tab" data-bs-target="#personas-content"
+                    type="button" role="tab">Personas</button>
+            </li>
+            <li class="nav-item">
+                <button class="nav-link" id="tab-vehiculos" data-bs-toggle="tab" data-bs-target="#vehiculos-content"
+                    type="button" role="tab">Vehículos</button>
+            </li>
+        </ul>
+        <div class="tab-content">
+            <!-- Tab Detalle -->
+            <div class="tab-pane fade show active" id="detalle-content" role="tabpanel">
+                <div class="custom-card-detail p-4 mb-3">
+                    <div class="row mb-2">
+                        <div class="col-6 mb-2"><span class="fw-semibold text-muted">Tipo:</span> <span
+                                id="detalle-tipo"></span></div>
+                        <div class="col-6 mb-2"><span class="fw-semibold text-muted">Subtipo:</span> <span
+                                id="detalle-subtipo"></span></div>
+                        <div class="col-6 mb-2"><span class="fw-semibold text-muted">Procedencia:</span> <span
+                                id="detalle-procedencia"></span></div>
+                        <div class="col-6 mb-2"><span class="fw-semibold text-muted">Registrado por:</span> <span
+                                id="detalle-registrado"></span></div>
+                        <div class="col-12 mb-2"><span class="fw-semibold text-muted">Estado:</span> <span
+                                id="detalle-estado"></span></div>
+                        <div class="col-12 mb-2"><span class="fw-semibold text-muted">Dirección:</span> <span
+                                id="detalle-direccion"></span></div>
+                        <div class="col-12 mb-2"><span class="fw-semibold text-muted">Comuna:</span> <span
+                                id="detalle-comuna"></span></div>
+                        <div class="col-12 mb-2"><span class="fw-semibold text-muted">Coordenadas:</span> <span
+                                id="detalle-coordenadas"></span></div>
+                        <div class="col-12 mb-2"><span class="fw-semibold text-muted">Observaciones:</span> <span
+                                id="detalle-observaciones"></span></div>
+                        <div class="col-12 mb-2" id="detalle-mapa"></div>
+                    </div>
+                </div>
+            </div>
+            <!-- Tab Imágenes -->
+            <div class="tab-pane fade" id="imagenes-content" role="tabpanel">
+                <div id="spinner-imagenes" style="display:none;" class="text-center py-3">
+                    <div class="spinner-corporativo"></div>
+                </div>
+                <div class="row" id="detalle-imagenes"></div>
+                <!-- Modal para ver imagen grande -->
+                <div class="modal fade" id="modalImagenGrande" tabindex="-1">
+                    <div class="modal-dialog modal-dialog-centered modal-lg">
+                        <div class="modal-content">
+                            <div class="modal-body p-0">
+                                <img id="imgModalGrande" src="" alt="Imagen evento" class="w-100"
+                                    style="object-fit:contain;max-height:80vh;">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Tab Antecedentes -->
+            <div class="tab-pane fade" id="antecedentes-content" role="tabpanel">
+                <div id="spinner-antecedentes" style="display:none;" class="text-center py-3">
+                    <div class="spinner-corporativo"></div>
+                </div>
+                <div id="antecedentes-wrapper"></div>
+            </div>
+            <!-- Tab Personas -->
+            <div class="tab-pane fade" id="personas-content" role="tabpanel" aria-labelledby="tab-personas">
+                <div id="spinner-personas" style="display:none;" class="text-center py-3">
+                    <div class="spinner-corporativo"></div>
+                </div>
+                <h5>Personas asociadas al evento</h5>
+                <!-- Filtros -->
+                <div class="row g-2 align-items-end mb-3">
+                    <div class="col-md-3">
+                        <label class="form-label mb-1">Buscar RUT</label>
+                        <input type="text" id="buscarRutPersona" class="form-control" placeholder="Ej: 12345678-9">
+                    </div>
+                    <div class="col-md-2">
+                        <label class="form-label mb-1 d-none d-md-block">&nbsp;</label>
+                        <button id="btnBuscarPersonaEvento" class="btn btn-outline-primary w-100">
+                            <i class="fas fa-search"></i> Buscar
+                        </button>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label mb-1">Buscar Apellido</label>
+                        <input type="text" id="buscarNombrePersona" class="form-control" placeholder="Ej: González">
+                    </div>
+                </div>
+                <div class="table-responsive mb-3">
+                    <table class="table table-sm table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>RUT</th>
+                                <th>Nombre</th>
+                                <th>Tipo persona</th>
+                                <th>Asignar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="listaPersonasEvento">
+                            <!-- Llenado dinámico vía JS -->
+                        </tbody>
+                    </table>
+                </div>
+                <div class="alert alert-success py-2 px-3" id="mensajeIngresoPersona" style="display:none;">
+                    SE INGRESÓ UNA PERSONA AL EVENTO
+                </div>
+                <div class="table-responsive mt-3">
+                    <table class="table table-sm table-bordered align-middle">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Persona</th>
+                                <th>RUT</th>
+                                <th>Tipo Persona</th>
+                                <th>Eliminar</th>
+                            </tr>
+                        </thead>
+                        <tbody id="asignados-lista-personas">
+                            <!-- Llenado dinámico vía JS -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <!-- Tab Vehículos -->
+            <div class="tab-pane fade" id="vehiculos-content" role="tabpanel" aria-labelledby="tab-vehiculos"
+                data-evento-id="">
+                <div id="spinner-vehiculos" style="display:none;" class="text-center py-3">
+                    <div class="spinner-corporativo"></div>
+                </div>
+                <div class="container-fluid px-0 py-3">
+                    <h5 class="mb-3">Vehículos asociados al evento</h5>
+                    <div class="row g-2 align-items-end mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label mb-1">Patente</label>
+                            <input type="text" id="buscarPatenteVehiculo" class="form-control" placeholder="Ej: AB1234">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label mb-1 d-none d-md-block">&nbsp;</label>
+                            <button id="btnBuscarVehiculoEvento" class="btn btn-outline-primary w-100">
+                                <i class="fas fa-search"></i> Buscar
+                            </button>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label mb-1">Modelo</label>
+                            <input type="text" id="buscarModeloVehiculo" class="form-control" placeholder="Ej: Hilux">
+                        </div>
+                    </div>
+                    <div class="table-responsive mb-3">
+                        <table class="table table-sm table-hover align-middle mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Patente</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                    <th>Tipo</th>
+                                    <th>Asignar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="listaVehiculosEvento">
+                                <!-- Llenado dinámico vía JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="table-responsive mt-3">
+                        <table class="table table-sm table-bordered align-middle">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Patente</th>
+                                    <th>Marca</th>
+                                    <th>Modelo</th>
+                                    <th>Tipo</th>
+                                    <th>Eliminar</th>
+                                </tr>
+                            </thead>
+                            <tbody id="asignados-lista-vehiculos">
+                                <!-- Llenado dinámico vía JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

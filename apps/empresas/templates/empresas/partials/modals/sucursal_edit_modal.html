@@ -1,0 +1,52 @@
+<!-- Modal de Editar Sucursal -->
+<div class="modal fade" id="editarSucursalModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header">
+          <h5 class="modal-title">Editar Sucursal</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <form id="form-editar-sucursal" method="post">
+          <div class="modal-body">
+              {% csrf_token %}
+              <!-- Contenedor de carga -->
+              <div id="loadingOverlay" style="display:none; text-align:center; padding:20px;">
+                  <p>Cargando datos para edición...</p>
+              </div>
+              <!-- Contenedor del formulario (inicialmente visible) -->
+              <div id="editFormContainer">
+                  <input type="hidden" id="editar-id_sucursal" name="id_sucursal">
+                  <div class="mb-3">
+                      <label class="form-label">Nombre</label>
+                      <input type="text" id="editar-nombre" name="nombre" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Dirección</label>
+                      <input type="text" id="editar-direccion" name="direccion" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Latitud</label>
+                      <input type="text" id="editar-latitud" name="latitud" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Longitud</label>
+                      <input type="text" id="editar-longitud" name="longitud" class="form-control" required>
+                  </div>
+                  <div class="mb-3">
+                      <label class="form-label">Comuna</label>
+                      <select id="editar-id_comuna" name="id_comuna" class="form-select" required>
+                          {% for comuna in comunas %}
+                          <option value="{{ comuna.id_comuna }}">{{ comuna.nombre }}</option>
+                          {% endfor %}
+                      </select>
+                  </div>
+              </div>
+          </div>
+          <div class="modal-footer">
+              <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+              <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+          </div>
+      </form>
+    </div>
+  </div>
+</div>

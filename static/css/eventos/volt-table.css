@@ -1,0 +1,116 @@
+.volt-header {
+    background: #23283a;
+    border-radius: 12px 12px 0 0;
+    padding: 2rem 2.2rem 1rem 2.2rem;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    margin-bottom: 0;
+}
+
+.volt-header h1 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: .01em;
+}
+
+.volt-btn-institucional {
+    background: #23283a;
+    color: #fff !important;
+    font-weight: 600;
+    border-radius: 6px;
+    border: none;
+    transition: background 0.2s;
+}
+
+.volt-btn-institucional:hover,
+.volt-btn-institucional:focus {
+    background: #0e2d50;
+    color: #fff !important;
+    border: none;
+}
+
+.volt-table th {
+    background: #23283a !important;
+    color: #fff !important;
+    font-weight: 600;
+    text-align: center;
+}
+
+.volt-table td {
+    vertical-align: middle;
+    text-align: center;
+}
+
+.btn-acciones {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: center;
+}
+
+.card-volt {
+    box-shadow: 0 3px 16px rgba(17, 54, 98, 0.06);
+    border-radius: 12px;
+    border: none;
+    margin-bottom: 3rem;
+}
+
+.badge-success {
+    background: #38a535;
+    color: #fff;
+}
+
+.badge-danger {
+    background: #dc3545;
+    color: #fff;
+}
+
+.alert-fixed {
+    position: fixed;
+    top: 90px;
+    right: 24px;
+    z-index: 9999;
+    min-width: 300px;
+}
+
+/* Switch institucional personalizado */
+.switch-institucional {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    font-size: 1rem;
+}
+
+.switch-institucional .form-switch .form-check-input {
+    width: 2.8em;
+    height: 1.3em;
+    background: #d6d9e4;
+    border: 2px solid #113662;
+    box-shadow: 0 0 0 0.2rem rgba(17, 54, 98, .10);
+    transition: background 0.3s;
+    cursor: pointer;
+}
+
+.switch-institucional .form-switch .form-check-input:checked {
+    background: rgb(49, 217, 15);
+    border-color: rgb(98, 34, 17);
+}
+
+.switch-institucional .form-check-label {
+    font-weight: 600;
+    color: #113662;
+    margin-left: 0.5rem;
+}
+
+.switch-institucional .badge {
+    font-size: 0.95em;
+    background: #fff3cd;
+    color: #113662;
+    margin-left: .3rem;
+    border-radius: 6px;
+    padding: 0.3em 0.7em;
+    font-weight: 600;
+    box-shadow: 0 1px 5px 0 rgba(17, 54, 98, 0.08);
+    border: 1px solid #ffe08a;
+}

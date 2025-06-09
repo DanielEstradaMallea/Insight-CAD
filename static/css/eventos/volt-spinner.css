@@ -1,0 +1,17 @@
+.spinner-corporativo {
+    display: inline-block;
+    width: 2.2em;
+    height: 2.2em;
+    border: 3.5px solid #4763a5;
+    border-top: 3.5px solid #c0d3fc;
+    border-radius: 50%;
+    animation: spin-corp 0.88s linear infinite;
+}
+@keyframes spin-corp {
+    0% {
+        transform: rotate(0deg);
+    }
+    100% {
+        transform: rotate(360deg);
+    }
+}

@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" rel="stylesheet">
+
+<style>
+  .volt-header {
+    background: #23283a;
+    border-radius: 12px 12px 0 0;
+    padding: 2rem 2.2rem 1rem 2.2rem;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    margin-bottom: 0;
+  }
+  .volt-header h2 {
+    margin: 0; font-weight: 700; font-size: 2rem; letter-spacing: .01em;
+  }
+  .volt-btn-institucional {
+    background: #23283a; color: #fff !important; font-weight: 600;
+    border-radius: 6px; border: none; transition: background 0.2s;
+  }
+  .volt-btn-institucional:hover, .volt-btn-institucional:focus {
+    background: #0e2d50; color: #fff !important; border: none;
+  }
+  .volt-table th {
+    background: #23283a !important; color: #fff !important; font-weight: 600; text-align: center;
+  }
+  .volt-table td { vertical-align: middle; text-align: center; }
+  .card-volt { box-shadow: 0 3px 16px rgba(17, 54, 98, 0.06); border-radius: 12px; border: none; margin-bottom: 3rem; }
+  .modal-header { background: #23283a; color: #fff; border-radius: 12px 12px 0 0; }
+  .modal-title { font-weight: 600; }
+  .modal-footer { border-top: 1px solid #f0f0f0; }
+</style>
+
+<div class="container py-4">
+    <div class="volt-header mb-0">
+        <h2><i class="fa-solid fa-users me-2"></i> Administración de Personas</h2>
+    </div>
+    <div class="d-flex align-items-center justify-content-between py-3"
+        style="background: #fff; border-radius: 0 0 10px 10px; box-shadow:0 2px 8px rgba(17,54,98,.05);">
+        <a href="{% url 'persona:create' %}" class="btn volt-btn-institucional px-4 py-2 mb-0">
+            <i class="fa-solid fa-user-plus"></i> Nueva Persona
+        </a>
+    </div>
+    <div class="card card-volt p-3 mt-0">
+        <table id="tabla_personas" class="table table-striped align-middle volt-table" style="width:100%">
+            <thead>
+                <tr>
+                    <th>RUT</th>
+                    <th>Nombre Completo</th>
+                    <th>Género</th>
+                    <th>Teléfono</th>
+                    <th>Email</th>
+                    <th style="width:110px;">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for persona in personas %}
+                <tr>
+                    <td>{{ persona.rut }}</td>
+                    <td>{{ persona.nombre|upper }} {{ persona.paterno|upper }} {{ persona.materno|default:''|upper }}</td>
+                    <td>{{ persona.id_genero.nombre }}</td>
+                    <td>{{ persona.telefono|default:'-' }}</td>
+                    <td>{{ persona.email|default:'-' }}</td>
+                    <td>
+                        <a href="{% url 'persona:update' persona.id_persona %}" class="btn btn-warning btn-sm" title="Editar">
+                            <i class="fas fa-edit"></i>
+                        </a>
+                        <button type="button" class="btn btn-danger btn-sm" data-bs-toggle="modal" data-bs-target="#confirmDeleteModal{{ persona.id_persona }}" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                        <!-- Modal Confirmar Eliminar -->
+                        <div class="modal fade" id="confirmDeleteModal{{ persona.id_persona }}" tabindex="-1" aria-labelledby="confirmDeleteModalLabel" aria-hidden="true">
+                          <div class="modal-dialog">
+                            <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title">Confirmar Eliminación</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                              </div>
+                              <div class="modal-body">
+                                ¿Estás seguro de eliminar a {{ persona.nombre }} {{ persona.paterno }}?
+                              </div>
+                              <div class="modal-footer">
+                                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                <a href="{% url 'persona:delete' persona.id_persona %}" class="btn btn-danger">Eliminar</a>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center">No se encontraron resultados</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- DataTables & JS -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+$(document).ready(function() {
+    $('#tabla_personas').DataTable({
+        pageLength: 10,
+        lengthMenu: [5, 10, 20, 50, 100],
+        ordering: true,
+        language: {
+            "decimal": "",
+            "emptyTable": "No hay datos disponibles",
+            "info": "Mostrando _START_ a _END_ de _TOTAL_ personas",
+            "infoEmpty": "Mostrando 0 a 0 de 0 personas",
+            "infoFiltered": "(filtrado de _MAX_ personas en total)",
+            "thousands": ",",
+            "lengthMenu": "Mostrar _MENU_ personas",
+            "loadingRecords": "Cargando...",
+            "processing": "Procesando...",
+            "search": "",
+            "searchPlaceholder": "Búsqueda rápida...",
+            "zeroRecords": "No se encontraron personas",
+            "paginate": {
+                "first": "Primero",
+                "last": "Último",
+                "next": "Siguiente",
+                "previous": "Anterior"
+            }
+        },
+        columnDefs: [
+            { targets: -1, orderable: false }
+        ]
+    });
+});
+</script>
+{% endblock %}

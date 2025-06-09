@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<!-- Leaflet & styles -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+
+
+<style>
+  /* Bordes y focus suaves para inputs y selects */
+  .form-control,
+  .form-select {
+    border-radius: .375rem;
+    box-shadow: none;
+    border: 1px solid #ced4da;
+    transition: border-color .2s ease-in-out;
+  }
+
+  .form-control:focus,
+  .form-select:focus {
+    border-color: #7b7fd5;
+    outline: none;
+    box-shadow: 0 0 0 .25rem rgba(123, 127, 213, .25);
+  }
+
+  /* Card limpio */
+  .card-header {
+    background: #ffffff !important;
+    border-bottom: 1px solid #e9ecef;
+  }
+
+  .card-body {
+    background: #ffffff;
+  }
+
+  /* Labels destacados */
+  .form-label {
+    font-weight: 500;
+    color: #495057;
+  }
+
+  /* Botón primario estilizado */
+  .btn-primary {
+    background-color: #212529;
+    border-color: #212529;
+    padding: .5rem 1.25rem;
+    border-radius: .375rem;
+    transition: background-color .2s;
+  }
+
+  .btn-primary:hover {
+    background-color: #1b1e23;
+    border-color: #1b1e23;
+  }
+
+  /* Mapa con borde y esquinas redondeadas */
+  #map {
+    width: 100%;
+    height: 300px;
+    border: 1px solid #ced4da;
+    border-radius: .375rem;
+  }
+</style>
+
+<div class="container py-4">
+  <div class="card shadow-sm">
+    <div class="card-header">
+      <h5 class="mb-0">Nuevo Reporte</h5>
+    </div>
+    <div class="card-body">
+      <form method="post" enctype="multipart/form-data" id="eventoForm" action="{% url 'evento:nuevo_evento' %}">
+        {% csrf_token %}
+        <div class="row g-3">
+          <!-- Título -->
+          <div class="col-md-6">
+            <label for="{{ form.nombre.id_for_label }}" class="form-label">Título *</label>
+            {{ form.nombre }}
+          </div>
+
+          <div class="col-md-6">
+            <label for="{{ form.id_procedencia.id_for_label }}" class="form-label">Procedencia</label>
+            {{ form.id_procedencia }}
+          </div>
+
+                    <!-- Tipo -->
+          <div class="col-md-6">
+            <label for="{{ form.id_tipo.id_for_label }}" class="form-label">Tipo *</label>
+            {{ form.id_tipo }}
+          </div>
+
+          <!-- Subtipo -->
+          <div class="col-md-6">
+            <label for="{{ form.id_subtipo.id_for_label }}" class="form-label">Subtipo *</label>
+            {{ form.id_subtipo }}
+          </div>
+
+          <div class="col-md-6">
+            <label for="{{ form.id_estado_actual.id_for_label }}" class="form-label">Estado *</label>
+            {{ form.id_estado_actual }}
+          </div>
+
+          <!-- Fecha -->
+          <div class="col-md-3">
+            <label for="{{ form.fecha.id_for_label }}" class="form-label">Fecha *</label>
+            {{ form.fecha }}
+          </div>
+
+          <!-- Hora -->
+          <div class="col-md-3">
+            <label for="{{ form.hora.id_for_label }}" class="form-label">Hora *</label>
+            {{ form.hora }}
+          </div>
+
+         
+
+          <div class="col-12">
+            <label for="id_detalle" class="form-label">Detalle</label>
+            <textarea id="id_detalle" name="detalle" class="form-control"
+              rows="4">{{ form.detalle.value|default_if_none:'' }}</textarea>
+          </div>
+
+          
+          <!-- Dirección con Autocomplete de Google -->
+          <div class="col-md-6">
+            <label for="id_direccion" class="form-label">Dirección *</label>
+            <input type="text" id="id_direccion" name="direccion" class="form-control"
+              placeholder="Escribe tu dirección..." autocomplete="off">
+          </div>
+
+
+           <!-- Comuna -->
+          <div class="col-md-6">
+            <label for="{{ form.id_comuna.id_for_label }}" class="form-label">Comuna *</label>
+            {{ form.id_comuna }}
+          </div>
+
+           <!-- Mapa -->
+          <div class="col-10">
+            <label class="form-label">Ubicación en el mapa</label>
+            <div id="map"></div>
+          </div>
+
+          <!-- Latitud -->
+          <div class="col-md-6">
+            <label for="{{ form.latitud.id_for_label }}" class="form-label">Latitud *</label>
+            {{ form.latitud }}
+          </div>
+
+          <!-- Longitud -->
+          <div class="col-md-6">
+            <label for="{{ form.longitud.id_for_label }}" class="form-label">Longitud *</label>
+            {{ form.longitud }}
+          </div>
+
+         
+
+          <!-- Resto de campos (empresa, sucursal, detalle, imágenes…) -->
+          <div class="col-md-6">
+            <label for="{{ form.empresa.id_for_label }}" class="form-label">Empresa</label>
+            {{ form.empresa }}
+          </div>
+          <div class="col-md-6">
+            <label for="{{ form.id_sucursal.id_for_label }}" class="form-label">Sucursal</label>
+            {{ form.id_sucursal }}
+          </div>
+          
+          <div class="col-12">
+            <label for="id_imagenes" class="form-label">Imágenes del evento (máx. 3)</label>
+            <input type="file" name="imagenes" id="id_imagenes" class="form-control" accept="image/*" multiple>
+            <small class="form-text text-muted">Puedes subir hasta 3 imágenes.</small>
+
+            <!-- Aquí pondremos las miniaturas -->
+            <div id="preview-imagenes" class="mt-3 d-flex flex-wrap gap-2"></div>
+          </div>
+
+        </div>
+
+        <div class="mt-4 text-end">
+          <a href="{% url 'evento:reporte_eventos' %}" class="btn btn-outline-secondary me-2">Cancelar</a>
+          <button type="submit" class="btn btn-primary">Guardar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.4.0/axios.min.js"></script>
+<script src="{% static 'js/formReportes/formMap.js' %}"></script>
+<script src="{% static 'js/formReportes/formTiposSubtipo.js' %}"></script>
+<script src="{% static 'js/formReportes/formEmpresaSucursal.js' %}"></script>
+<!-- Google Maps API (con tu API key y callback) -->
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDBEtk__sGNmNnvoWuZ3oiJgKhtSnlseIs&libraries=visualization,geometry&libraries=places&language=es&region=CL&callback=initMap"
+  async defer>
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const input = document.getElementById('id_imagenes');
+  const preview = document.getElementById('preview-imagenes');
+
+  // Usamos un DataTransfer para poder manipular input.files
+  const dt = new DataTransfer();
+
+  function renderPreviews() {
+    preview.innerHTML = '';
+    Array.from(dt.files).forEach((file, idx) => {
+      const url = URL.createObjectURL(file);
+      const wrapper = document.createElement('div');
+      wrapper.className = 'position-relative';
+      wrapper.style.width = '100px';
+      wrapper.style.height = '100px';
+
+      const img = document.createElement('img');
+      img.src = url;
+      img.style.objectFit = 'cover';
+      img.style.width = '100%';
+      img.style.height = '100%';
+      img.className = 'rounded';
+
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.innerHTML = '&times;';
+      btn.className = 'btn btn-sm btn-danger position-absolute top-0 end-0';
+      btn.style.transform = 'translate(50%,-50%)';
+      btn.addEventListener('click', () => {
+        dt.items.remove(idx);
+        input.files = dt.files;
+        renderPreviews();
+      });
+
+      wrapper.appendChild(img);
+      wrapper.appendChild(btn);
+      preview.appendChild(wrapper);
+    });
+  }
+
+  input.addEventListener('change', (e) => {
+    // Añade nuevos archivos al DataTransfer, hasta un máximo de 3
+    Array.from(e.target.files).forEach(file => {
+      if (dt.files.length < 3) {
+        dt.items.add(file);
+      }
+    });
+    
+    input.files = dt.files;
+    renderPreviews();
+  });
+});
+</script>
+{% endblock %}

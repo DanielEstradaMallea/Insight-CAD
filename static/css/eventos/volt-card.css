@@ -1,0 +1,54 @@
+.custom-card-detail {
+    border-radius: 18px;
+    border: 1px solid #e7eaf3;
+    box-shadow: 0 1px 7px rgba(16, 30, 54, .09);
+    background: #fff;
+}
+/* Listas del detalle evento */
+.list-group-event-detail li {
+    border: none;
+    padding-left: 0;
+    padding-right: 0;
+    font-size: 1em;
+    color: #24292e;
+    background: none;
+    margin-bottom: .5em;
+}
+.list-group-event-detail span:first-child {
+    min-width: 92px;
+    color: #64718c;
+    font-weight: 500;
+}
+/* Alertas internas en el panel */
+.tab-content .alert {
+    border-radius: 14px;
+    border: none;
+    box-shadow: 0 1px 8px rgba(53, 71, 125, 0.05);
+    font-size: 15px;
+}
+/* Tablas en el offcanvas */
+.tab-content .table {
+    background: #fcfdff;
+    border-radius: 12px;
+    box-shadow: 0 1px 5px rgba(34, 51, 108, 0.05);
+    overflow: hidden;
+}
+.tab-content .table th {
+    background: #4763a5;
+    color: #fff;
+    font-weight: 700;
+    border: none;
+    font-size: 15.4px;
+    letter-spacing: .01em;
+}
+.tab-content .table td {
+    background: #fff;
+    font-size: 15px;
+    border-top: 1px solid #f4f6fb;
+    color: #2d3652;
+    vertical-align: middle;
+}
+.tab-content .table tbody tr:hover {
+    background: #f4f7fd;
+    transition: background .18s;
+}

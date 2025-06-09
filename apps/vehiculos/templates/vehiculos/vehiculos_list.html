@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<style>
+  .volt-header {
+    background: #23283a;
+    border-radius: 12px 12px 0 0;
+    padding: 2rem 2.2rem 1rem 2.2rem;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    margin-bottom: 0;
+  }
+  .volt-header h1 { margin: 0; font-weight: 700; font-size: 2rem; letter-spacing: .01em; }
+  .volt-btn-institucional {
+    background: #23283a; color: #fff !important; font-weight: 600;
+    border-radius: 6px; border: none; transition: background 0.2s;
+  }
+  .volt-btn-institucional:hover, .volt-btn-institucional:focus {
+    background: #0e2d50; color: #fff !important; border: none;
+  }
+  .volt-table th {
+    background: #23283a !important; color: #fff !important;
+    font-weight: 600; text-align: center;
+  }
+  .volt-table td { vertical-align: middle; text-align: center; }
+  .btn-acciones { display: flex; gap: 0.4rem; justify-content: center; }
+  .card-volt { box-shadow: 0 3px 16px rgba(17, 54, 98, 0.06); border-radius: 12px; border: none; margin-bottom: 3rem; }
+  .badge-success { background: #38a535; color: #fff; }
+  .badge-danger { background: #dc3545; color: #fff; }
+  .modal-header { background: #23283a; color: #fff; border-radius: 12px 12px 0 0; }
+  .modal-title { font-weight: 600; }
+  .modal-footer { border-top: 1px solid #f0f0f0; }
+</style>
+
+<div class="container mt-5">
+  <div class="volt-header mb-0">
+    <h1><i class="fa-solid fa-car me-2"></i> Vehículos</h1>
+  </div>
+  <div class="d-flex align-items-center justify-content-between py-3"
+    style="background: #fff; border-radius: 0 0 10px 10px; box-shadow:0 2px 8px rgba(17,54,98,.05);">
+    <button class="btn volt-btn-institucional px-4 py-2" data-bs-toggle="modal" data-bs-target="#addVehiculoModal">
+      <i class="fas fa-plus"></i> Nuevo Vehículo
+    </button>
+    <!-- Puedes agregar aquí un filtro si lo requieres -->
+  </div>
+  <div class="card card-volt p-3 mt-0">
+    <table class="table table-striped align-middle volt-table" id="tabla_vehiculos" style="width:100%">
+      <thead>
+        <tr>
+          <th>Patente</th>
+          <th>Marca</th>
+          <th>Modelo</th>
+          <th>Color</th>
+          <th>Tipo</th>
+          <th style="width:110px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody id="vehiculosBody">
+        {% for veh in page_obj %}
+        <tr data-id="{{ veh.id_vehiculo }}">
+          <td>{{ veh.patente }}</td>
+          <td>{{ veh.id_marca_vehiculo.nombre }}</td>
+          <td>{{ veh.modelo }}</td>
+          <td>{{ veh.color }}</td>
+          <td>{{ veh.id_tipo_vehiculo.nombre }}</td>
+          <td>
+            <div class="btn-acciones">
+              <button class="btn btn-warning btn-sm btn-edit-vehiculo"
+                data-id="{{ veh.id_vehiculo }}"
+                data-patente="{{ veh.patente }}"
+                data-marca="{{ veh.id_marca_vehiculo.id_marca_vehiculo }}"
+                data-modelo="{{ veh.modelo }}"
+                data-color="{{ veh.color }}"
+                data-tipo="{{ veh.id_tipo_vehiculo.id_tipo_vehiculo }}"
+                data-bs-toggle="modal" data-bs-target="#editVehiculoModal">
+                <i class="fas fa-edit"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- MODAL AGREGAR -->
+<div class="modal fade" id="addVehiculoModal" tabindex="-1" aria-labelledby="addVehiculoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formAgregarVehiculo" method="post" action="{% url 'vehiculos:agregar_vehiculo' %}">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Agregar Vehículo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Patente</label>
+            <input type="text" class="form-control" name="patente" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Marca</label>
+            <select class="form-select" name="id_marca_vehiculo" required>
+              <option value="">Seleccione...</option>
+              {% for marca in marcas %}
+                <option value="{{ marca.id_marca_vehiculo }}">{{ marca.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Modelo</label>
+            <input type="text" class="form-control" name="modelo" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Color</label>
+            <input type="text" class="form-control" name="color" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" name="id_tipo_vehiculo" required>
+              <option value="">Seleccione...</option>
+              {% for tipo in tipos %}
+                <option value="{{ tipo.id_tipo_vehiculo }}">{{ tipo.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn volt-btn-institucional">Agregar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL EDITAR -->
+<div class="modal fade" id="editVehiculoModal" tabindex="-1" aria-labelledby="editVehiculoModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="formEditarVehiculo" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title">Editar Vehículo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editIdVehiculo" name="id_vehiculo">
+          <div class="mb-3">
+            <label class="form-label">Patente</label>
+            <input type="text" class="form-control" name="patente" id="editPatente" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Marca</label>
+            <select class="form-select" name="id_marca_vehiculo" id="editMarca" required>
+              <option value="">Seleccione...</option>
+              {% for marca in marcas %}
+                <option value="{{ marca.id_marca_vehiculo }}">{{ marca.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Modelo</label>
+            <input type="text" class="form-control" name="modelo" id="editModelo" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Color</label>
+            <input type="text" class="form-control" name="color" id="editColor" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Tipo</label>
+            <select class="form-select" name="id_tipo_vehiculo" id="editTipo" required>
+              <option value="">Seleccione...</option>
+              {% for tipo in tipos %}
+                <option value="{{ tipo.id_tipo_vehiculo }}">{{ tipo.nombre }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn volt-btn-institucional">Guardar Cambios</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+let table;
+$(document).ready(function () {
+  table = $('#tabla_vehiculos').DataTable({
+    language: {
+      "search": "Buscar:",
+      "lengthMenu": "Mostrar _MENU_ registros",
+      "zeroRecords": "No se encontraron resultados",
+      "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+      "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+      "infoFiltered": "(filtrado de _MAX_ registros en total)",
+      "paginate": {
+        "first": "Primero",
+        "last": "Último",
+        "next": "Siguiente",
+        "previous": "Anterior"
+      }
+    }
+  });
+
+  // ABRIR MODAL EDITAR Y CARGAR DATOS
+  $('#tabla_vehiculos').on('click', '.btn-edit-vehiculo', function () {
+    $('#editIdVehiculo').val($(this).data('id'));
+    $('#editPatente').val($(this).data('patente'));
+    $('#editMarca').val($(this).data('marca'));
+    $('#editModelo').val($(this).data('modelo'));
+    $('#editColor').val($(this).data('color'));
+    $('#editTipo').val($(this).data('tipo'));
+    $('#formEditarVehiculo').attr('action', '/vehiculos/modificar/' + $(this).data('id') + '/');
+  });
+
+  // AGREGAR VEHÍCULO
+  $('#formAgregarVehiculo').submit(function(e){
+    e.preventDefault();
+    var $form = $(this);
+    var $submitBtn = $form.find('button[type="submit"]');
+    $submitBtn.prop('disabled', true);
+
+    $.ajax({
+      type: 'POST',
+      url: $form.attr('action'),
+      data: $form.serialize(),
+      success: function(response){
+        if(response.success){
+          $('#addVehiculoModal').modal('hide');
+          let veh = response.vehiculo;
+          let nuevaFila = table.row.add([
+            veh.patente,
+            veh.marca,
+            veh.modelo,
+            veh.color,
+            veh.tipo,
+            `<div class="btn-acciones">
+              <button class="btn btn-warning btn-sm btn-edit-vehiculo"
+                data-id="${veh.id}"
+                data-patente="${veh.patente}"
+                data-marca="${$form.find('[name=id_marca_vehiculo]').val()}"
+                data-modelo="${veh.modelo}"
+                data-color="${veh.color}"
+                data-tipo="${$form.find('[name=id_tipo_vehiculo]').val()}"
+                data-bs-toggle="modal"
+                data-bs-target="#editVehiculoModal">
+                <i class="fas fa-edit"></i>
+              </button>
+            </div>`
+          ]).draw().node();
+          $(nuevaFila).attr('data-id', veh.id);
+          $form[0].reset();
+        }else{
+          alert("Error al agregar vehículo: " + JSON.stringify(response.errors));
+        }
+      },
+      error: function(){
+        alert("Error inesperado al agregar vehículo.");
+      },
+      complete: function(){
+        $submitBtn.prop('disabled', false);
+      }
+    });
+  });
+
+  // EDITAR VEHÍCULO
+  $('#formEditarVehiculo').submit(function(e){
+    e.preventDefault();
+    var $form = $(this);
+    var idVehiculo = $('#editIdVehiculo').val();
+    var $submitBtn = $form.find('button[type="submit"]');
+    $submitBtn.prop('disabled', true);
+
+    $.ajax({
+      type: 'POST',
+      url: $form.attr('action'),
+      data: $form.serialize(),
+      success: function(response){
+        if(response.success){
+          $('#editVehiculoModal').modal('hide');
+          $('#tabla_vehiculos tbody tr').each(function(){
+            if($(this).attr('data-id') == idVehiculo){
+              let veh = response.vehiculo;
+              let $tds = $(this).find('td');
+              $tds.eq(0).text(veh.patente);
+              $tds.eq(1).text(veh.marca);
+              $tds.eq(2).text(veh.modelo);
+              $tds.eq(3).text(veh.color);
+              $tds.eq(4).text(veh.tipo);
+              let btn = $(this).find('.btn-edit-vehiculo');
+              btn.data('patente', veh.patente);
+              btn.data('marca', $form.find('[name=id_marca_vehiculo]').val());
+              btn.data('modelo', veh.modelo);
+              btn.data('color', veh.color);
+              btn.data('tipo', $form.find('[name=id_tipo_vehiculo]').val());
+            }
+          });
+        }else{
+          alert("Error al editar vehículo: " + JSON.stringify(response.errors));
+        }
+      },
+      error: function(){
+        alert("Error inesperado al editar vehículo.");
+      },
+      complete: function(){
+        $submitBtn.prop('disabled', false);
+      }
+    });
+  });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<head>
+  <title>Eventos Asociados</title>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body { background: #f7f8fc; font-family: 'Montserrat', Arial, sans-serif; }
+    .eventos-card {
+      margin: 32px auto;
+      max-width: 1150px;
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 4px 24px rgba(45, 62, 80, 0.08);
+      padding: 36px 32px 32px 32px;
+      animation: fadeIn 0.8s;
+    }
+    .tabla-contenedor {
+      max-height: 410px; min-height: 260px;
+      overflow-y: auto; border-radius: 7px;
+      border: 1px solid #e5e7eb;
+      margin-bottom: 20px;
+    }
+    table.custom-table {
+      width: 100%; border-collapse: separate;
+      border-spacing: 0; background: #fff;
+    }
+    table.custom-table thead th {
+      background: #2c3e50; color: #fff; font-weight: 700; position: sticky; top: 0; z-index: 1;
+      padding: 13px 10px; border-bottom: 2px solid #244074; text-transform: uppercase;
+    }
+    table.custom-table tbody td { padding: 9px; text-align: center; border-bottom: 1px solid #e5e7eb; }
+    table.custom-table tbody tr:hover { background: #ecf0f1; }
+    table.custom-table tbody tr:nth-child(odd) { background: #f8fafb; }
+    table.custom-table tbody tr:nth-child(even) { background: #fff; }
+    .btn { border-radius: 7px; padding: 8px 16px; font-weight: 600; }
+    .btn-primary { background: #071a2e; color: #fff; }
+    .btn-info { background: #17a2b8; color: #fff; }
+    .btn-secondary { background: #5a6268; color: #fff; }
+    .empty-state { color: #b4b9bf; font-size: 1.13em; text-align: center; margin-top: 48px; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+  </style>
+</head>
+
+<div class="eventos-card">
+  <h2 class="mb-3"><i class="fa-solid fa-calendar-check"></i> Eventos asociados a {{ persona.nombre }} {{ persona.paterno }} {% if persona.materno %}{{ persona.materno }}{% endif %} <span class="fs-6 text-muted">(RUT: {{ persona.rut }})</span></h2>
+  {% if fecha_inicio and fecha_fin %}
+    <p class="mb-2">Entre: <strong>{{ fecha_inicio }}</strong> y <strong>{{ fecha_fin }}</strong></p>
+  {% endif %}
+
+  {% if eventos %}
+    <div class="tabla-contenedor">
+      <table class="custom-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Evento</th>
+            <th>Tipo Evento</th>
+            <th>Subtipo Evento</th>
+            <th>Fecha</th>
+            <th>Hora</th>
+            <th>Dirección</th>
+            <th>Tipo de Asociación</th>
+            <th>Detalles</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for evento in eventos %}
+            <tr>
+              <td>{{ evento.id_evento }}</td>
+              <td>{{ evento.evento }}</td>
+              <td>{{ evento.tipo_evento }}</td>
+              <td>{{ evento.subtipo_evento }}</td>
+              <td>{{ evento.fecha }}</td>
+              <td>{{ evento.hora }}</td>
+              <td>{{ evento.direccion }}</td>
+              <td>{{ evento.tipo_persona }}</td>
+              <td>
+                <a href="#" class="btn btn-info btn-sm" title="Ver detalles"><i class="fa-solid fa-eye"></i></a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <a href="{% url 'utilidades:export_eventos_excel' %}?persona_id={{ persona.id_persona }}&fecha_inicio={{ fecha_inicio }}&fecha_fin={{ fecha_fin }}" class="btn btn-primary mt-2">
+      <i class="fa-solid fa-file-export"></i> Exportar a Excel
+    </a>
+  {% else %}
+    <div class="empty-state mt-5 mb-5">
+      <i class="fa-solid fa-user-xmark fa-2x mb-2"></i>
+      <div>No se encontraron eventos para esta persona en el rango de fechas especificado.</div>
+    </div>
+  {% endif %}
+
+  <div class="mt-4">
+    <a href="{% url 'utilidades:buscar_persona' %}" class="btn btn-secondary">
+      <i class="fa-solid fa-arrow-left"></i> Volver al Buscador
+    </a>
+  </div>
+</div>
+{% endblock %}

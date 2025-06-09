@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<link href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<link rel="stylesheet" href="{% static 'css/eventos/volt-general.css' %}">
+<link rel="stylesheet" href="{% static 'css/eventos/volt-table.css' %}">
+<link rel="stylesheet" href="{% static 'css/eventos/volt-offcanvas.css' %}">
+<link rel="stylesheet" href="{% static 'css/eventos/volt-tabs.css' %}">
+<link rel="stylesheet" href="{% static 'css/eventos/volt-card.css' %}">
+<link rel="stylesheet" href="{% static 'css/eventos/volt-buttons.css' %}">
+<link rel="stylesheet" href="{% static 'css/eventos/volt-forms.css' %}">
+<link rel="stylesheet" href="{% static 'css/eventos/volt-spinner.css' %}">
+<link rel="stylesheet" href="{% static 'css/eventos/volt-utilities.css' %}">
+<link rel="stylesheet" href="{% static 'css/eventos/volt-responsive.css' %}">
+
+
+<div class="container-fluid py-4" style="position:relative;">
+
+
+    <h2 class="mb-4">Reportes de Eventos</h2>
+    <!-- Filtros principales -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <label for="tipoEventoFilter" class="form-label fw-semibold">Tipo de Evento</label>
+            <select id="tipoEventoFilter" class="form-select"></select>
+        </div>
+        <div class="col-md-3">
+            <label for="fechaInicio" class="form-label fw-semibold">Fecha Inicio</label>
+            <input type="date" id="fechaInicio" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="fechaFin" class="form-label fw-semibold">Fecha Fin</label>
+            <input type="date" id="fechaFin" class="form-control">
+        </div>
+        <div class="col-md-3 d-flex align-items-end">
+            <button id="btnFiltrar" class="btn btn-volt w-100" type="button">
+                <span id="icon-filtrar"><i class="fas fa-filter"></i></span>
+                <span id="text-filtrar">Filtrar</span>
+                <span id="spinner-filtrar" class="spinner-border spinner-border-sm" style="display:none;" role="status"
+                    aria-hidden="true"></span>
+            </button>
+        </div>
+    </div>
+
+    <div class="modal fade" id="confirmarAlertaModal" tabindex="-1" aria-labelledby="confirmarAlertaLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="confirmarAlertaLabel">Confirmar cambio de estado de alerta</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                </div>
+                <div class="modal-body">
+                    <span id="mensajeConfirmacion">¿Desea cambiar el estado de la alerta?</span>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button id="confirmarCambio" type="button" class="btn btn-primary">Sí</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Cambiar Estado -->
+    <div class="modal fade" id="cambiarEstadoModal" tabindex="-1" aria-labelledby="cambiarEstadoModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="cambiarEstadoModalLabel">Cambiar Estado del Evento</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="formCambiarEstado">
+                        {% csrf_token %}
+                        <div class="mb-3">
+                            <label for="nuevoEstado" class="form-label">Seleccione el nuevo estado:</label>
+                            <select class="form-select" id="nuevoEstado" required>
+                                <!-- Los estados se cargarán dinámicamente -->
+                            </select>
+                        </div>
+                        <button type="submit" class="btn btn-primary" id="btnGuardarEstado">
+                            Guardar
+                        </button>
+                    </form>
+
+                    <!-- Spinner de carga en historial -->
+                    <div class="text-center py-3" id="spinnerHistorialEstado" style="display:none;">
+                        <div class="spinner-corporativo"></div>
+                    </div>
+                    <!-- Historial de cambios de estado -->
+                    <div class="mt-4">
+                        <h6>Historial de Cambios de Estado</h6>
+                        <div id="historialEstados" class="list-group" style="max-height: 300px; overflow-y: auto;">
+                            <!-- Los cambios de estado se cargarán aquí dinámicamente -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+    <!-- Tabla de eventos -->
+    <div class="card volt-table p-3">
+        <table id="tablaEventos" class="table table-striped align-middle">
+            <thead>
+                <tr>
+                    <th>Prioridad</th>
+                    <th>Nombre</th>
+                    <th>Tipo</th>
+                    <th>Subtipo</th>
+                    <th>Fecha</th>
+                    <th>Comuna</th>
+                    <th>Estado</th>
+                    <th>Alerta</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- AJAX -->
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Botón flotante para reportar emergencia -->
+    <button id="btnReportarEvento" class="btn btn-reportar-evento shadow-lg" title="Reportar Emergencia">
+        <i class="fa-solid fa-circle-plus fa-lg me-2"></i>
+        <span class="d-none d-md-inline">Reportar Emergencia</span>
+    </button>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+<script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.36/vfs_fonts.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="{% static 'js/formReportes/formModales.js' %}"></script>
+<script src="{% static 'js/formReportes/formVehiculosEvento.js' %}"></script>
+<script src="{% static 'js/formReportes/alertHandler.js' %}"></script>
+<script src="{% static 'js/formReportes/estadoHandler.js' %}"></script>
+<script>
+    $('#btnReportarEvento').on('click', function () {
+    // Aquí puedes abrir un modal, offcanvas o ir a la vista de reporte
+    window.location.href = "{% url 'evento:nuevo_evento' %}";
+    // O:
+    // $('#modalReportarEvento').modal('show');
+});
+</script>
+<script>
+    // Debes definir las URLs antes de importar el JS
+    // Puedes pasarlas desde Django con template vars o como variables globales:
+    const urlCargarTiposEventos = "{% url 'evento:cargar_tipos_eventos' %}";
+    const urlObtenerEventosFiltrados = "{% url 'evento:obtener_eventos_filtrados' %}";
+    window.csrf_token = "{{ csrf_token }}"; // para ajax POST
+</script>
+<script src="{% static 'js/eventos/tablaEventos.js' %}"></script>
+
+{% include "eventos/offcanvas_detalle_evento.html" %}
+{% endblock %}

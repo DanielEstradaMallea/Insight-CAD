@@ -1,0 +1,382 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+<style>
+  .volt-header {
+    background: #23283a;
+    border-radius: 12px 12px 0 0;
+    padding: 2rem 2.2rem 1rem 2.2rem;
+    display: flex;
+    align-items: center;
+    color: #fff;
+    margin-bottom: 0;
+  }
+
+  .volt-header h1 {
+    margin: 0;
+    font-weight: 700;
+    font-size: 2rem;
+    letter-spacing: .01em;
+  }
+
+  .volt-table th {
+    background: #23283a !important;
+    color: #fff !important;
+    font-weight: 600;
+    text-align: center;
+  }
+
+  .volt-table td {
+    vertical-align: middle;
+    text-align: center;
+  }
+
+  .btn-acciones {
+    display: flex;
+    gap: 0.4rem;
+    justify-content: center;
+  }
+
+  .badge-success {
+    background: #38a535;
+    color: #fff;
+  }
+
+  .badge-danger {
+    background: #dc3545;
+    color: #fff;
+  }
+
+  .badge-prioridad-baja {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .badge-prioridad-media {
+    background: #ffeeba;
+    color: #856404;
+  }
+
+  .badge-prioridad-alta {
+    background: #f8d7da;
+    color: #721c24;
+  }
+</style>
+
+<div class="container mt-5">
+  <div class="volt-header mb-0">
+    <h1><i class="fa-solid fa-layer-group me-2"></i> Subtipos de Evento</h1>
+  </div>
+  <div class="d-flex align-items-center justify-content-between py-3"
+    style="background: #fff; border-radius: 0 0 10px 10px; box-shadow:0 2px 8px rgba(17,54,98,.05);">
+    <div>
+      <label for="tipo_evento" class="form-label mb-0 me-2 fw-bold">Tipo de Evento:</label>
+      <select class="form-select d-inline w-auto" id="tipo_evento" style="min-width:260px;">
+        <option value="" disabled selected>Selecciona un tipo de evento</option>
+      </select>
+    </div>
+    <div class="d-flex align-items-center gap-4">
+      <div class="form-check form-switch">
+        <input class="form-check-input" type="checkbox" id="switchMostrarTodos">
+        <label class="form-check-label" for="switchMostrarTodos">
+          Mostrar todos (activos e inactivos)
+        </label>
+      </div>
+      <button class="btn btn-primary px-4 py-2" data-bs-toggle="modal" data-bs-target="#agregarSubtipoModal">
+        <i class="fas fa-plus"></i> Nuevo Subtipo
+      </button>
+    </div>
+  </div>
+
+  <div id="alert-container"></div>
+
+  <div class="card card-volt p-3 mt-0">
+    <table class="table table-striped align-middle volt-table" id="subtipos-table" style="width:100%">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo</th>
+          <th>Prioridad</th>
+          <th>Activo</th>
+          <th style="width:110px;">Acciones</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Cargado por JS -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Modal AGREGAR -->
+<div class="modal fade" id="agregarSubtipoModal" tabindex="-1" aria-labelledby="agregarSubtipoModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="agregarSubtipoForm" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-plus-circle"></i> Agregar Subtipo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label for="nombreSubtipo" class="form-label">Nombre:</label>
+            <input type="text" class="form-control" id="nombreSubtipo" name="nombre" required>
+          </div>
+          <div class="mb-3">
+            <label for="prioridadSubtipo" class="form-label">Prioridad:</label>
+            <select class="form-select" id="prioridadSubtipo" name="prioridad">
+              <option value="BAJA">BAJA</option>
+              <option value="MEDIA">MEDIA</option>
+              <option value="ALTA">ALTA</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="activoSubtipo" class="form-label">Activo:</label>
+            <select class="form-select" id="activoSubtipo" name="activo">
+              <option value="SI">Sí</option>
+              <option value="NO">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-success">Agregar</button>
+          <div id="loadingSpinnerAdd" class="spinner-border text-primary ms-3" role="status" style="display: none;">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal EDITAR -->
+<div class="modal fade" id="editarSubtipoModal" tabindex="-1" aria-labelledby="editarSubtipoModalLabel"
+  aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="editarSubtipoForm" method="post">
+        {% csrf_token %}
+        <div class="modal-header">
+          <h5 class="modal-title"><i class="fas fa-edit"></i> Editar Subtipo</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="editarIdSubtipo" name="id_subtipo">
+          <div class="mb-3">
+            <label for="editarNombreSubtipo" class="form-label">Nombre:</label>
+            <input type="text" class="form-control" id="editarNombreSubtipo" name="nombre" required>
+          </div>
+          <div class="mb-3">
+            <label for="editarPrioridadSubtipo" class="form-label">Prioridad:</label>
+            <select class="form-select" id="editarPrioridadSubtipo" name="prioridad">
+              <option value="BAJA">BAJA</option>
+              <option value="MEDIA">MEDIA</option>
+              <option value="ALTA">ALTA</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label for="editarActivoSubtipo" class="form-label">Activo:</label>
+            <select class="form-select" id="editarActivoSubtipo" name="activo">
+              <option value="SI">Sí</option>
+              <option value="NO">No</option>
+            </select>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+          <button type="submit" class="btn btn-primary">Guardar Cambios</button>
+          <div id="loadingSpinnerEdit" class="spinner-border text-primary ms-3" role="status" style="display: none;">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- JS y DataTables -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+<script>
+  function showAlert(message, type = 'success') {
+    $('#alert-container').html(
+      `<div class="alert alert-${type} alert-dismissible fade show alert-fixed" role="alert">
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Cerrar"></button>
+    </div>`
+    );
+    setTimeout(() => { $('.alert').alert('close'); }, 2500);
+  }
+
+  // Prioridad badge
+  function prioridadBadge(prioridad) {
+    let map = {
+      'BAJA': 'badge-prioridad-baja',
+      'MEDIA': 'badge-prioridad-media',
+      'ALTA': 'badge-prioridad-alta'
+    };
+    return `<span class="badge ${map[prioridad] || ''}">${prioridad}</span>`;
+  }
+
+  let tablaSubtipos;
+  let subtiposData = [];
+
+  $(document).ready(function () {
+    // Cargar tipos de evento
+    $.get("{% url 'evento:cargar_tipos_eventos' %}", function (tipos) {
+      let $tipo = $("#tipo_evento");
+      $tipo.append('<option value="" disabled selected>Selecciona un tipo de evento</option>');
+      tipos.forEach(t => {
+        $tipo.append(`<option value="${t.id_tipo}">${t.nombre}</option>`);
+      });
+    });
+
+    // Cambiar tipo evento: cargar subtipos
+    $("#tipo_evento").on('change', function () {
+      let id_tipo = $(this).val();
+      if (!id_tipo) return;
+      $.get("{% url 'evento:cargar_subtipos_eventos' %}", { 'id_tipo': id_tipo }, function (data) {
+        subtiposData = data;
+        renderSubtiposTable();
+      });
+    });
+
+    // Switch para mostrar solo activos
+    $("#switchMostrarTodos").change(function () {
+      renderSubtiposTable();
+    });
+
+    // Inicializa DataTable (una sola vez)
+    tablaSubtipos = $("#subtipos-table").DataTable({
+      ordering: true,
+      pageLength: 10,
+      language: {
+        "decimal": "",
+        "emptyTable": "No hay subtipos",
+        "info": "Mostrando _START_ a _END_ de _TOTAL_ subtipos",
+        "infoEmpty": "Mostrando 0 a 0 de 0 subtipos",
+        "infoFiltered": "(filtrado de _MAX_ subtipos en total)",
+        "thousands": ",",
+        "lengthMenu": "Mostrar _MENU_ subtipos",
+        "loadingRecords": "Cargando...",
+        "processing": "Procesando...",
+        "search": "",
+        "searchPlaceholder": "Buscar subtipo...",
+        "zeroRecords": "No se encontraron subtipos",
+        "paginate": {
+          "first": "Primero", "last": "Último", "next": "Siguiente", "previous": "Anterior"
+        }
+      },
+      columnDefs: [{ targets: -1, orderable: false }]
+    });
+
+    // Renderiza la tabla usando la data
+    function renderSubtiposTable() {
+      let onlyActive = !$("#switchMostrarTodos").prop('checked');
+      let filtered = onlyActive ? subtiposData.filter(s => s.activo === "SI") : subtiposData;
+      tablaSubtipos.clear();
+      filtered.forEach(function (subtipo) {
+        tablaSubtipos.row.add([
+          subtipo.nombre,
+          subtipo.id_tipo__nombre,
+          prioridadBadge(subtipo.prioridad),
+          subtipo.activo === "SI" ? 'Sí' : 'No',
+          `<div class="btn-acciones">
+            <button class="btn btn-secondary btn-sm btnEditar" data-id="${subtipo.id_subtipo}" data-nombre="${subtipo.nombre}" data-prioridad="${subtipo.prioridad}" data-activo="${subtipo.activo}" title="Editar"><i class="fas fa-edit"></i></button>
+            <button class="btn btn-danger btn-sm btnEliminar" data-id="${subtipo.id_subtipo}" title="Eliminar"><i class="fas fa-trash"></i></button>
+        </div>`
+        ]);
+      });
+      tablaSubtipos.draw();
+    }
+
+    // Agregar subtipo
+    $("#agregarSubtipoForm").submit(function (e) {
+      e.preventDefault();
+      let id_tipo = $("#tipo_evento").val();
+      let nombre = $("#nombreSubtipo").val();
+      let prioridad = $("#prioridadSubtipo").val();
+      let activo = $("#activoSubtipo").val();
+      if (!id_tipo || !nombre) return;
+      $("#loadingSpinnerAdd").show();
+      $.post("{% url 'evento:agregar_subtipo' %}", {
+        'csrfmiddlewaretoken': '{{ csrf_token }}',
+        'id_tipo': id_tipo,
+        'nombre': nombre,
+        'prioridad': prioridad,
+        'activo': activo
+      }, function (resp) {
+        $("#loadingSpinnerAdd").hide();
+        if (resp.success) {
+          $('#agregarSubtipoModal').modal('hide');
+          $("#agregarSubtipoForm")[0].reset();
+          // recargar subtipos de ese tipo
+          $("#tipo_evento").trigger('change');
+          showAlert("Subtipo agregado correctamente");
+        } else {
+          showAlert("Error al agregar subtipo", 'danger');
+        }
+      });
+    });
+
+    // Abrir modal de edición
+    $(document).on('click', '.btnEditar', function () {
+      $("#editarIdSubtipo").val($(this).data('id'));
+      $("#editarNombreSubtipo").val($(this).data('nombre'));
+      $("#editarPrioridadSubtipo").val($(this).data('prioridad'));
+      $("#editarActivoSubtipo").val($(this).data('activo'));
+      $("#editarSubtipoModal").modal('show');
+    });
+
+    // Editar subtipo
+    $("#editarSubtipoForm").submit(function (e) {
+      e.preventDefault();
+      let id_subtipo = $("#editarIdSubtipo").val();
+      let nombre = $("#editarNombreSubtipo").val();
+      let prioridad = $("#editarPrioridadSubtipo").val();
+      let activo = $("#editarActivoSubtipo").val();
+      $("#loadingSpinnerEdit").show();
+      $.post("{% url 'evento:editar_subtipo' %}", {
+        'csrfmiddlewaretoken': '{{ csrf_token }}',
+        'id_subtipo': id_subtipo,
+        'nombre': nombre,
+        'prioridad': prioridad,
+        'activo': activo
+      }, function (resp) {
+        $("#loadingSpinnerEdit").hide();
+        if (resp.success) {
+          $("#editarSubtipoModal").modal('hide');
+          $("#editarSubtipoForm")[0].reset();
+          $("#tipo_evento").trigger('change');
+          showAlert("Subtipo editado correctamente");
+        } else {
+          showAlert("Error al editar subtipo", 'danger');
+        }
+      });
+    });
+
+    // Eliminar subtipo
+    $(document).on('click', '.btnEliminar', function () {
+      if (!confirm("¿Seguro que quieres eliminar este subtipo?")) return;
+      let id_subtipo = $(this).data('id');
+      $.post("{% url 'evento:eliminar_subtipo' %}", {
+        'csrfmiddlewaretoken': '{{ csrf_token }}',
+        'id_subtipo': id_subtipo
+      }, function (resp) {
+        if (resp.success) {
+          $("#tipo_evento").trigger('change');
+          showAlert("Subtipo eliminado correctamente");
+        } else {
+          showAlert("Error al eliminar subtipo", 'danger');
+        }
+      });
+    });
+
+  });
+</script>
+{% endblock %}
