@@ -9,14 +9,20 @@ load_dotenv(BASE_DIR / ".env")
 # ─── Seguridad y entorno ───────────────
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "insecure-default")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
+
+
+def _split_env_list(var_name: str) -> list[str]:
+    """Split an environment variable into a list, dropping empty values."""
+    return [v for v in os.getenv(var_name, "").split(",") if v]
+
 ALLOWED_HOSTS = (
-    ["127.0.0.1", "localhost"] if DEBUG
-    else os.getenv("DJANGO_ALLOWED_HOSTS", "").split(",")
+    ["127.0.0.1", "localhost"] if DEBUG else _split_env_list("DJANGO_ALLOWED_HOSTS")
 )
 
 # ─── CORS y CSRF ───────────────────────
-CORS_ALLOWED_ORIGINS = os.getenv("CORS_ALLOWED_ORIGINS", "").split(",") if not DEBUG else []
-CSRF_TRUSTED_ORIGINS = os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if not DEBUG else []
+CORS_ALLOWED_ORIGINS = _split_env_list("CORS_ALLOWED_ORIGINS") if not DEBUG else []
+CSRF_TRUSTED_ORIGINS = _split_env_list("CSRF_TRUSTED_ORIGINS") if not DEBUG else []
+
 
 # ─── Seguridad en producción ───────────
 if not DEBUG:
