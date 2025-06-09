@@ -19,7 +19,7 @@ def _split_env_list(var_name: str) -> list[str]:
     return [v for v in os.getenv(var_name, "").split(",") if v]
 
 ALLOWED_HOSTS = (
-    ["127.0.0.1", "localhost"] if DEBUG else _split_env_list("DJANGO_ALLOWED_HOSTS")
+    ["127.0.0.1", "localhost","insight-cad.up.railway.app"] if DEBUG else _split_env_list("DJANGO_ALLOWED_HOSTS")
 )
 
 # ─── CORS y CSRF ───────────────────────
