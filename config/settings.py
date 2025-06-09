@@ -23,8 +23,8 @@ ALLOWED_HOSTS = (
 )
 
 # ─── CORS y CSRF ───────────────────────
-CORS_ALLOWED_ORIGINS = _split_env_list("CORS_ALLOWED_ORIGINS") if not DEBUG else []
-CSRF_TRUSTED_ORIGINS = _split_env_list("CSRF_TRUSTED_ORIGINS") if not DEBUG else []
+CORS_ALLOWED_ORIGINS = _split_env_list("CORS_ALLOWED_ORIGINS") 
+CSRF_TRUSTED_ORIGINS = _split_env_list("CSRF_TRUSTED_ORIGINS")
 
 
 # ─── Seguridad en producción ───────────
