@@ -6,6 +6,9 @@ from dotenv import load_dotenv
 BASE_DIR = Path(__file__).resolve().parent.parent
 load_dotenv(BASE_DIR / ".env")
 
+import pymysql
+pymysql.install_as_MySQLdb()
+
 # ─── Seguridad y entorno ───────────────
 SECRET_KEY = os.getenv("DJANGO_SECRET_KEY", "insecure-default")
 DEBUG = os.getenv("DJANGO_DEBUG", "False") == "True"
