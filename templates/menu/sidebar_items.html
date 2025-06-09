@@ -13,30 +13,15 @@
             <span class="sidebar-text">Gestión Eventos</span>
         </a>
     </li>
-    <!-- MAPAS (siempre visible) -->
-    <li class="nav-item">
-        <a class="nav-link collapsed d-flex align-items-center" data-bs-toggle="collapse" href="#submenu-mapas"
-            role="button" aria-expanded="false" aria-controls="submenu-mapas">
-            <span class="sidebar-icon"><i class="fa-solid fa-globe"></i></span>
-            <span class="sidebar-text">Mapas</span>
-            <span class="link-arrow ms-auto"><i class="fas fa-chevron-down"></i></span>
-        </a>
-        <div class="multi-level collapse" id="submenu-mapas" data-bs-parent="#sidebar-nav">
-            <ul class="flex-column nav ps-4">
-                <li class="nav-item">
-                    <a class="nav-link" href="{% url 'mapa:dashboard'%}">
-                        <span class="sidebar-subicon"><i class="fa-solid fa-satellite-dish"></i></span> Infoscan GPS
-                    </a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">
-                        <span class="sidebar-subicon"><i class="fa-solid fa-bullseye"></i></span> Mapa Calor
-                    </a>
-                </li>
-            </ul>
-        </div>
-    </li>
 
+    <li class="nav-item">
+        <a href="{% url 'mapa:dashboard'%}" class="nav-link">
+            <span class="sidebar-icon"><i class="fa-solid fa-chart-column"></i></span>
+            <span class="sidebar-text">Estadísticas</span>
+        </a>
+    </li>
+   
+    
     <!-- SOLO PARA ADMINISTRADORES -->
     {% if request.user|in_groups:"Administrador" %}
         <!-- PERSONAS -->
