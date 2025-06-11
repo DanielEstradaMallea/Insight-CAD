@@ -1,0 +1,379 @@
+{% load static %}
+{% load widget_tweaks %}
+<!DOCTYPE html>
+
+
+<html lang="es">
+
+
+<head>
+    <meta charset="UTF-8">
+    <title>Iniciar Sesión</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+    <style>
+        body,
+        html {
+            min-height: 100vh;
+            width: 100vw;
+            margin: 0;
+            padding: 0;
+            background: #182139;
+            background-image: url("{% static 'img/insightlogin.png' %}");
+            background-size: cover;
+            background-position: center center;
+            background-repeat: no-repeat;
+        }
+
+        .login-outer {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        .login-container {
+            background: rgba(24, 28, 43, 0.82);
+            border-radius: 18px;
+            box-shadow: 0 4px 40px 0 rgba(20, 20, 40, 0.35);
+            padding: 2.7rem 2.5rem 2.3rem 2.5rem;
+            min-width: 350px;
+            width: 100%;
+            max-width: 420px;
+            color: #fff;
+            z-index: 2;
+            position: relative;
+            margin: 1rem;
+            backdrop-filter: blur(3.5px);
+            border: 1.7px solid rgba(255, 255, 255, 0.10);
+        }
+
+        .login-title {
+            font-size: 2.1rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: .1em;
+            color: #ffffff;
+            letter-spacing: -1px;
+            text-shadow: 0 2px 24px #29306250;
+        }
+
+        .login-sub {
+            font-size: 1.08rem;
+            color: #bdc4db;
+            margin-bottom: 1.3em;
+            text-align: center;
+            font-weight: 400;
+        }
+
+        .form-label {
+            color: #f7f8fc;
+            font-weight: 500;
+            margin-bottom: 0.15em;
+            margin-left: 0.1em;
+            letter-spacing: .5px;
+        }
+
+        .input-group-login {
+            display: flex;
+            align-items: center;
+            background: #232b46;
+            border-radius: 9px;
+            border: 1.5px solid #283049;
+            margin-bottom: 1.1em;
+            transition: border 0.17s;
+            padding: 0;
+        }
+
+        .input-group-login:focus-within {
+            border-color: #52b9ed;
+            box-shadow: 0 1px 8px #a8dafe38;
+        }
+
+        .input-icon {
+            padding: 0 1em;
+            font-size: 1.27em;
+            color: #90b5e6;
+            min-width: 45px;
+            text-align: center;
+            opacity: 0.93;
+            user-select: none;
+        }
+
+        .form-control-login {
+            background: transparent;
+            border: none;
+            outline: none;
+            color: #fff;
+            font-size: 1.08rem;
+            width: 100%;
+            padding: 0.89em 1.1em 0.89em 0.2em;
+            border-radius: 9px;
+            box-shadow: none;
+        }
+
+        .form-control-login::placeholder {
+            color: #a1a8bd;
+            opacity: 0.82;
+        }
+
+        .toggle-password {
+            cursor: pointer;
+            color: #90b5e6;
+            padding: 0 1.07em;
+            font-size: 1.13em;
+            user-select: none;
+            opacity: 0.87;
+            transition: color 0.15s;
+        }
+
+        .toggle-password:hover {
+            color: #7caffb;
+        }
+
+        .login-btn {
+            width: 100%;
+            background: linear-gradient(90deg, #3fa2ed 25%, #2141b8 100%);
+            color: #fff;
+            font-weight: 600;
+            font-size: 1.12rem;
+            border: none;
+            border-radius: 9px;
+            padding: 0.95em 0;
+            margin-top: 1.09em;
+            margin-bottom: 0.8em;
+            box-shadow: 0 2px 16px #50a3ee1c;
+            transition: background 0.18s;
+            letter-spacing: 1px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: .5em;
+        }
+
+        .login-btn:hover {
+            background: linear-gradient(90deg, #2141b8 20%, #3fa2ed 100%);
+            color: #fff;
+        }
+
+        .login-footer {
+            color: #bcc4e4;
+            font-size: 1.05rem;
+            margin-top: 1.7em;
+            text-align: center;
+        }
+
+        .login-footer a {
+            color: #6fc5ff;
+            font-weight: 600;
+            text-decoration: none;
+            margin-left: 0.18em;
+            transition: color 0.14s;
+        }
+
+        .login-footer a:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+
+        .login-logo {
+            display: block;
+            margin: 0 auto 1.5rem auto;
+            max-width: 88px;
+            filter: drop-shadow(0 4px 16px #1d243b40);
+        }
+
+        /* Toast flotante */
+        .custom-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 2.5em;
+            transform: translateX(-50%);
+            background: #23202bfa;
+            color: #fff;
+            border-radius: 10px;
+            padding: 1em 1.55em 1em 1.1em;
+            font-size: 1.1rem;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            box-shadow: 0 8px 32px 0 #0004;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity .3s, bottom .4s;
+            min-width: 260px;
+            max-width: 92vw;
+        }
+
+        .custom-toast.show {
+            opacity: 1;
+            pointer-events: auto;
+            bottom: 2.5em;
+        }
+
+        .custom-toast .fa-exclamation-triangle {
+            color: #ffc107;
+            margin-right: .85em;
+            font-size: 1.28em;
+        }
+
+        /* Loader lottie */
+        #login-loader {
+            position: fixed;
+            left: 0;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(20, 24, 34, 0.92);
+            z-index: 999999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: opacity .25s;
+            opacity: 0;
+            pointer-events: none;
+        }
+
+        #login-loader.active {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* --- FIX AUTOCOMPLETE: color de fondo input --- */
+        input:-webkit-autofill,
+        input:-webkit-autofill:focus,
+        input:-webkit-autofill:hover,
+        input:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 1000px #232b46 inset !important;
+            box-shadow: 0 0 0 1000px #232b46 inset !important;
+            -webkit-text-fill-color: #fff !important;
+            caret-color: #fff !important;
+            transition: background-color 9999s ease-in-out 0s;
+        }
+
+        @media (max-width: 600px) {
+            .login-container {
+                min-width: 0;
+                max-width: 97vw;
+                padding: 2.3rem 1rem;
+            }
+
+            .login-title {
+                font-size: 1.45rem;
+            }
+
+            .custom-toast {
+                font-size: 1em;
+                padding: 0.85em 0.8em;
+                min-width: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="login-outer">
+        <div class="login-container">
+            <img src="{% static 'img/logo-insighlogin.png' %}" alt="Logo" class="login-logo"
+                onerror="this.style.display='none'" />
+            <div class="login-title">Iniciar Sesión</div>
+            <div class="login-sub">Plataforma Seguridad | Insight</div>
+            <form id="login-form" method="post" autocomplete="off" novalidate>
+                {% csrf_token %}
+                <label for="id_username" class="form-label">Usuario</label>
+                <div class="input-group-login mb-3">
+                    <span class="input-icon"><i class="fa-solid fa-user"></i></span>
+                    {{ form.username|add_class:"form-control-login" }}
+                </div>
+                <label for="id_password" class="form-label">Contraseña</label>
+                <div class="input-group-login mb-3">
+                    <span class="input-icon"><i class="fa-solid fa-lock"></i></span>
+                    <input type="password" name="password" id="id_password" class="form-control-login"
+                        placeholder="Contraseña" required autocomplete="off" />
+                    <span class="toggle-password" onclick="togglePassword()"><i id="toggleIcon"
+                            class="fa-regular fa-eye"></i></span>
+                </div>
+                <button type="submit" class="login-btn"><i class="fa-solid fa-right-to-bracket"></i> Entrar</button>
+            </form>
+            <div class="login-footer">
+                ¿No tienes cuenta?
+                <a href="#">Crear cuenta</a>
+            </div>
+        </div>
+    </div>
+    <!-- Loader Lottie -->
+    <div id="login-loader">
+        <div id="lottie-loader" style="width:250px;height:250px"></div>
+    </div>
+    <!-- Toast de error -->
+    <div id="toast" class="custom-toast">
+        <i class="fa-solid fa-exclamation-triangle"></i>
+        <span id="toast-msg"></span>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/js/all.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.10.2/lottie.min.js"></script>
+    <script>
+        // Loader animación Lottie
+        lottie.loadAnimation({
+            container: document.getElementById('lottie-loader'),
+            path: "{% static 'lottie/loading.json' %}",
+            renderer: 'svg',
+            loop: true,
+            autoplay: true
+        });
+
+        function togglePassword() {
+            const pwInput = document.getElementById("id_password");
+            const icon = document.getElementById("toggleIcon");
+            if (pwInput.type === "password") {
+                pwInput.type = "text";
+                icon.classList.remove("fa-eye");
+                icon.classList.add("fa-eye-slash");
+            } else {
+                pwInput.type = "password";
+                icon.classList.remove("fa-eye-slash");
+                icon.classList.add("fa-eye");
+            }
+        }
+        // Toast personalizado
+        function showToast(msg) {
+            const toast = document.getElementById("toast");
+            document.getElementById("toast-msg").textContent = msg;
+            toast.classList.add("show");
+            setTimeout(() => { toast.classList.remove("show"); }, 2700);
+        }
+        // Validación campos vacíos y loader en submit exitoso
+        document.getElementById("login-form").addEventListener("submit", function (e) {
+            const username = this.querySelector('[name="username"]');
+            const password = this.querySelector('[name="password"]');
+            let valid = true;
+            if (!username.value.trim()) {
+                showToast("Por favor, ingresa tu usuario.");
+                username.focus();
+                valid = false;
+            } else if (!password.value.trim()) {
+                showToast("Por favor, ingresa tu contraseña.");
+                password.focus();
+                valid = false;
+            }
+            if (!valid) {
+                e.preventDefault();
+            } else {
+                // Mostrar loader solo si el submit va a continuar (login exitoso)
+                const loader = document.getElementById('login-loader');
+                loader.classList.add('active');
+            }
+        });
+        // Toast error de Django (credenciales incorrectas)
+        {% if form.non_field_errors %}
+        document.addEventListener('DOMContentLoaded', function () {
+            showToast("Usuario o contraseña incorrectos. Verifica mayúsculas y minúsculas.");
+        });
+        {% endif %}
+    </script>
+</body>
+
+</html>

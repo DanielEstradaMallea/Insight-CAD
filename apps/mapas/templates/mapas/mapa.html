@@ -1,0 +1,1247 @@
+{% extends "base.html"%}
+{% load static %}
+
+{% block title %}Mapa de Eventos{% endblock %}
+
+{% block extra_css %}
+<style>
+  /* MAP CONTAINER */
+  #map-container {
+    position: relative;
+    width: 100%;
+    height: 100vh;
+    min-height: 520px;
+  }
+
+  #map {
+    width: 100%;
+    height: 100%;
+    box-shadow: 0 4px 24px rgba(44, 62, 80, 0.12);
+  }
+
+  /* LOADING OVERLAY */
+  #events-loader {
+    position: absolute;
+    inset: 0;
+    background: rgba(32, 34, 47, 0.8);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 500;
+  }
+
+  .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(255, 255, 255, 0.3);
+    border-top-color: #fff;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* SEARCH BOX */
+  #search-box {
+    position: absolute;
+    top: 30px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 102;
+  }
+
+  #pac-input {
+    width: 340px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.11);
+  }
+
+  /* FLOATING LAYERS BUTTON */
+  #floatingLayersBtn {
+    position: fixed;
+    bottom: 74px;
+    right: 20px;
+    z-index: 60;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #1c173d 0%, #425699 90%);
+    color: #fff;
+    border: none;
+    border-radius: 20%;
+    outline: none;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.28);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    cursor: pointer;
+    opacity: 0.95;
+    transition: background 0.2s, transform 0.18s;
+  }
+
+  /* SIDE LAYERS OVERLAY */
+  #sideLayersOverlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.22);
+    z-index: 1099;
+  }
+
+  #sideLayersOverlay.show {
+    display: block;
+  }
+
+  /* SIDE LAYERS PANEL */
+  #sideLayersPanel {
+    position: fixed;
+    top: 0;
+    right: -360px;
+    width: 330px;
+    max-width: 95vw;
+    height: 100vh;
+    background: #22232b;
+    color: #f5f6fa;
+    z-index: 1100;
+    box-shadow: -2px 0 26px rgba(10, 10, 30, 0.19);
+    transition: right 0.4s cubic-bezier(.77, .2, .21, .93);
+    display: flex;
+    flex-direction: column;
+    border-radius: 10px 0 0 10px;
+  }
+
+  #sideLayersPanel.open {
+    right: 0;
+  }
+
+  #sideLayersPanel .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 26px 30px 15px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 1.23rem;
+    font-weight: bold;
+    letter-spacing: 0.05em;
+  }
+
+  #sideLayersPanel .close-btn {
+    background: none;
+    border: none;
+    color: #f7c873;
+    font-size: 1.5em;
+    cursor: pointer;
+    transition: color 0.16s;
+  }
+
+  #sideLayersPanel .close-btn:hover {
+    color: #595453;
+  }
+
+  #sideLayersPanel .panel-content {
+    flex: 1;
+    padding: 18px 28px 30px;
+    overflow-y: auto;
+  }
+
+  #sideLayersPanel h6 {
+    font-size: 1.08rem;
+    color: #f7c873;
+    margin-bottom: 6px;
+  }
+
+  .btn-group .btn {
+    font-size: 0.99rem;
+    font-weight: 500;
+    border-radius: 7px;
+    margin-bottom: 5px;
+  }
+
+  .form-switch .form-check-input {
+    width: 2.2em;
+    height: 1.2em;
+    background: #35353c;
+    border: 1px solid #f7c873;
+    margin-right: 10px;
+    transition: background 0.18s;
+  }
+
+  .form-switch .form-check-input:checked {
+    background: #f7c873;
+    border-color: #f7c873;
+  }
+
+  .form-check-label {
+    color: #f5f6fa;
+    font-size: 1em;
+  }
+
+  .form-check-label i {
+    margin-right: 6px;
+    color: #fad564;
+  }
+
+  /* RESPONSIVE: LAYERS PANEL & BUTTON */
+  @media (max-width: 600px) {
+    #floatingLayersBtn {
+      bottom: 16px;
+      right: 8px;
+    }
+
+    #sideLayersPanel {
+      width: 98vw !important;
+      border-radius: 0;
+    }
+  }
+
+  /* PANEL DE ESTADÍSTICAS */
+  #event-stats-panel {
+    position: fixed;
+    top: 0;
+    left: 300;
+    z-index: 65;
+    width: 470px;
+    max-width: 98vw;
+    height: 100vh;
+    background: #11182aee;
+    box-shadow: 0 10px 54px rgba(16, 28, 56, 0.19);
+    display: flex;
+    flex-direction: column;
+    font-family: 'Inter', Arial, sans-serif;
+    border-right: 2px solid #232940;
+    border-radius: 18px 0 0 18px;
+    transition: width 0.18s, border-radius 0.18s, background 0.2s;
+  }
+
+  #event-stats-panel .stats-content {
+    flex: 1 1 0;
+    overflow-y: auto;
+    /* Reduce el padding */
+    padding: 24px 16px 18px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 18px;
+    /* Reduce el gap */
+  }
+
+  /* Gráficos ECharts */
+  #event-bar-chart,
+  #event-pie-chart {
+    width: 400px;
+    height: 270px;
+    background: #161e30;
+    border-radius: 18px;
+    box-shadow: 0 1px 14px rgba(22, 30, 47, 0.10);
+    border: 1.5px solid #25305b;
+    padding: 0;
+    /* Elimina el padding extra */
+    margin-bottom: 10px;
+    /* Más compacto */
+    box-sizing: border-box;
+    /* ¡IMPORTANTE! */
+    display: block;
+  }
+
+  /* Responsive para móviles */
+  @media (max-width: 950px) {
+    #event-stats-panel {
+      width: 100vw !important;
+      min-width: 0 !important;
+      max-width: 100vw !important;
+      border-radius: 0 !important;
+      box-shadow: 0 -2px 36px rgba(32, 32, 32, 0.09);
+      padding: 0 !important;
+      border-right: none;
+    }
+
+    #event-stats-panel .stats-content {
+      padding: 12px 3vw 12px 3vw !important;
+      gap: 10px;
+    }
+
+    #event-bar-chart,
+    #event-pie-chart {
+      width: 100% !important;
+      min-width: 0 !important;
+      height: 180px !important;
+      padding: 0 !important;
+      margin-bottom: 8px !important;
+      border-radius: 12px !important;
+    }
+  }
+
+  /* Leyenda pie chart */
+  #event-pie-legend {
+    margin-top: 10px;
+    font-size: 1.06em;
+    font-weight: 500;
+    color: #ffffff;
+    letter-spacing: 0.01em;
+  }
+
+  .legend-dot {
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    margin-right: 6px;
+    vertical-align: middle;
+    border: 2px solid #fff;
+    box-shadow: 0 0 2px #0002;
+  }
+
+  /* Collapse/expand */
+  #collapseStatsBtn {
+    position: absolute;
+    top: 12px;
+    right: 17px;
+    background: none;
+    border: none;
+    font-size: 1.7em;
+    color: #b0adac;
+    cursor: pointer;
+    transition: color 0.17s;
+    z-index: 10;
+  }
+
+  #collapseStatsBtn:hover {
+    color: #c8531d;
+  }
+
+  #event-stats-panel.minimized {
+    width: 56px;
+    height: 56px;
+    background: transparent;
+    box-shadow: none;
+    top: 22px;
+    left: 18px;
+    border-radius: 14px;
+  }
+
+  #event-stats-panel.minimized .stats-content {
+    display: none;
+  }
+
+  /* Botón expandir */
+  #expandStatsBtn {
+    position: fixed;
+    bottom: 140px;
+    right: 20px;
+    z-index: 70;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #1c173d 0%, #425699 90%);
+    color: #fff;
+    border: none;
+    border-radius: 18px;
+    box-shadow: 0 2px 14px rgba(0, 0, 0, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.33em;
+    cursor: pointer;
+    transition: transform 0.18s;
+  }
+
+  /* RESPONSIVE: Panel y gráficos fluidos */
+  @media (max-width: 950px) {
+    #event-stats-panel {
+      left: 0 !important;
+      width: 100vw !important;
+      min-width: 0 !important;
+      max-width: 100vw !important;
+      border-radius: 0 !important;
+      box-shadow: 0 -2px 36px rgba(32, 32, 32, 0.09);
+      padding: 0 0 16px 0 !important;
+      border-right: none;
+    }
+
+    #event-bar-chart,
+    #event-pie-chart {
+      width: 99vw !important;
+      min-width: 120px !important;
+      max-width: 99vw !important;
+      padding: 10px 2vw 2vw 2vw !important;
+      border-radius: 16px !important;
+    }
+
+    #event-stats-panel .stats-content {
+      padding: 18px 4vw 10px 4vw !important;
+      gap: 18px;
+    }
+  }
+
+  @media (max-width: 620px) {
+
+    #event-bar-chart,
+    #event-pie-chart {
+      min-width: 70px !important;
+      height: 160px !important;
+      padding: 5px 1vw 1vw 1vw !important;
+    }
+
+    #event-stats-panel .stats-content {
+      padding: 5px 1vw 8px 1vw !important;
+    }
+
+    #event-stats-panel h3 {
+      font-size: 1.14em !important;
+    }
+  }
+
+  /* --- TOOLTIP CLUSTER --- */
+  .custom-tooltip-cluster {
+    background: #21232b;
+    color: #ffe8c2;
+    border-radius: 8px;
+    padding: 1.25em 1.5em 1.15em 1.5em;
+    box-shadow: 0 6px 32px rgba(0, 0, 0, 0.22);
+    font-family: 'Inter', Arial, sans-serif;
+    font-size: 1.09em;
+    min-width: 195px;
+    max-width: 300px;
+    border: 2px solid #f7c873;
+    letter-spacing: 0.01em;
+    position: relative;
+    z-index: 10000;
+  }
+
+  .custom-tooltip-cluster .tt-title {
+    font-weight: bold;
+    font-size: 1.13em;
+    color: #f7c873;
+    margin-bottom: 13px;
+    display: flex;
+    align-items: center;
+  }
+
+  .custom-tooltip-cluster .tt-title i {
+    margin-right: 7px;
+  }
+
+  .custom-tooltip-cluster .tt-row {
+    display: flex;
+    align-items: center;
+    margin-bottom: 7px;
+  }
+
+  .custom-tooltip-cluster .tt-dot {
+    display: inline-block;
+    width: 1.25em;
+    height: 1.25em;
+    border-radius: 50%;
+    margin-right: 0.9em;
+    border: 2.1px solid #fff;
+  }
+
+  .custom-tooltip-cluster .tt-cantidad {
+    background: rgba(255, 255, 255, 0.07);
+    border-radius: 7px;
+    padding: 2px 10px;
+    font-weight: 500;
+    font-size: 14px;
+    color: #ffe8c2;
+    margin-left: 5px;
+  }
+
+  .custom-tooltip-cluster .tt-total {
+    margin-top: 14px;
+    font-size: 0.96em;
+    color: #adadad;
+  }
+
+  .custom-tooltip-cluster .tt-total span {
+    color: #ffe8c2;
+    font-weight: bold;
+    font-size: 1.03em;
+  }
+
+  /* --- GMAP INFOWINDOW OVERRIDES --- */
+  .gm-style .gm-style-iw-c,
+  .gm-style .gm-style-iw-t,
+  .gm-style .gm-style-iw-d {
+    box-shadow: none !important;
+    border-radius: 10px !important;
+    padding: 0 !important;
+    background: transparent !important;
+    overflow: visible !important;
+    border: none !important;
+  }
+
+  .gm-style .gm-style-iw-t::after,
+  .gm-style .gm-style-iw-tc::after {
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+
+  .gm-style-iw-c button[aria-label="Close"] {
+    display: none !important;
+  }
+
+  /* --- SVG LOADER ANIMATIONS --- */
+  .svg-loader-cog {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  :is(.svg-loader-cog .front, .svg-loader-cog .back) {
+    fill: none;
+    stroke-width: 6px;
+    stroke: currentColor;
+    transform-origin: center;
+    transform: rotate(-100deg);
+  }
+
+  .svg-loader-cog .back {
+    opacity: 0.5;
+  }
+
+  .svg-loader-cog .back,
+  .svg-loader-cog .front {
+    stroke-dasharray: 22 66;
+  }
+
+  .svg-loader-cog .outer circle {
+    stroke-dasharray: 62.75 188.25;
+  }
+
+  .svg-loader-cog .outer circle.back {
+    animation: circle-outer135 1.8s ease infinite 0.3s;
+  }
+
+  .svg-loader-cog .outer circle.front {
+    animation: circle-outer135 1.8s ease infinite 0.15s;
+  }
+
+  .svg-loader-cog .middle circle {
+    stroke-dasharray: 42.5 127.5;
+  }
+
+  .svg-loader-cog .middle circle.back {
+    animation: circle-middle6123 1.8s ease infinite 0.25s;
+  }
+
+  .svg-loader-cog .middle circle.front {
+    animation: circle-middle6123 1.8s ease infinite 0.1s;
+  }
+
+  .svg-loader-cog .inner circle {
+    stroke-dasharray: 22 66;
+  }
+
+  .svg-loader-cog .inner circle.back {
+    animation: circle-inner162 1.8s ease infinite 0.2s;
+  }
+
+  .svg-loader-cog .inner circle.front {
+    animation: circle-inner162 1.8s ease infinite 0.05s;
+  }
+
+  @keyframes circle-outer135 {
+    0% {
+      stroke-dashoffset: 25;
+    }
+
+    25% {
+      stroke-dashoffset: 0;
+    }
+
+    65% {
+      stroke-dashoffset: 301;
+    }
+
+    80% {
+      stroke-dashoffset: 276;
+    }
+
+    100% {
+      stroke-dashoffset: 276;
+    }
+  }
+
+  @keyframes circle-middle6123 {
+    0% {
+      stroke-dashoffset: 17;
+    }
+
+    25% {
+      stroke-dashoffset: 0;
+    }
+
+    65% {
+      stroke-dashoffset: 204;
+    }
+
+    80% {
+      stroke-dashoffset: 187;
+    }
+
+    100% {
+      stroke-dashoffset: 187;
+    }
+  }
+
+  @keyframes circle-inner162 {
+    0% {
+      stroke-dashoffset: 9;
+    }
+
+    25% {
+      stroke-dashoffset: 0;
+    }
+
+    65% {
+      stroke-dashoffset: 106;
+    }
+
+    80% {
+      stroke-dashoffset: 97;
+    }
+
+    100% {
+      stroke-dashoffset: 97;
+    }
+  }
+</style>
+{% endblock %}
+
+
+{% block content %}
+<div id="map-container">
+  <div id="map"></div>
+  <div id="events-loader">
+    <div class="svg-loader-cog">
+      <!-- SVG ANIMADO: -->
+      <svg version="1.1" id="cog9_1_" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"
+        x="0px" y="0px" viewBox="0 0 96 96" style="width:172px; height:172px; color:#00c721;" xml:space="preserve">
+        <g class="outer">
+          <circle class="back" cx="43" cy="43" r="40" />
+          <circle class="front" cx="43" cy="43" r="40" />
+        </g>
+        <g class="middle">
+          <circle class="back" cx="43" cy="43" r="27" />
+          <circle class="front" cx="43" cy="43" r="27" />
+        </g>
+        <g class="inner">
+          <circle class="back" cx="43" cy="43" r="14" />
+          <circle class="front" cx="43" cy="43" r="14" />
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <!-- BOTÓN FLOTANTE DE CAPAS -->
+  <button id="floatingLayersBtn" title="Capas y overlays">
+    <i class="fas fa-layer-group"></i>
+  </button>
+  <!-- PANEL LATERAL DE CAPAS -->
+  <div id="sideLayersOverlay"></div>
+  <div id="sideLayersPanel">
+    <div class="panel-header">
+      <span><i class="fas fa-layer-group"></i> Capas y Overlays</span>
+      <button class="close-btn" id="closeLayersPanelBtn">&times;</button>
+    </div>
+    <div class="panel-content">
+      <div class="mb-3">
+        <h6><i class="fa-solid fa-map me-2"></i>Capas Base</h6>
+        <div class="btn-group w-100 mb-2" role="group">
+          <input type="radio" class="btn-check" name="mapStyle" id="styleDefault" value="default" autocomplete="off"
+            checked>
+          <label class="btn btn-light" for="styleDefault"><i class="fa-solid fa-sun"></i> Día</label>
+          <input type="radio" class="btn-check" name="mapStyle" id="styleDark" value="dark" autocomplete="off">
+          <label class="btn btn-dark text-white" for="styleDark"><i class="fa-solid fa-moon"></i> Noche</label>
+          <input type="radio" class="btn-check" name="mapStyle" id="styleRetro" value="retro" autocomplete="off">
+          <label class="btn btn-warning" for="styleRetro"><i class="fa-solid fa-temperature-three-quarters"></i>
+            Retro</label>
+          <input type="radio" class="btn-check" name="mapStyle" id="styleSatellite" value="satellite"
+            autocomplete="off">
+          <label class="btn btn-secondary" for="styleSatellite"><i class="fa-solid fa-satellite-dish"></i>
+            Satélite</label>
+        </div>
+      </div>
+      <hr style="border-color:rgba(255,255,255,0.10)">
+      <div class="mb-2">
+        <h6 class="mb-2"><i class="fa-solid fa-layer-group"></i> Overlays</h6>
+        <div class="form-check form-switch mb-1">
+          <input class="form-check-input" type="checkbox" id="trafficSwitch">
+          <label class="form-check-label" for="trafficSwitch">
+            <i class="fas fa-car-side"></i> Tráfico en tiempo real
+          </label>
+        </div>
+        <div class="form-check form-switch mb-1">
+          <input class="form-check-input" type="checkbox" id="heatmapSwitch">
+          <label class="form-check-label" for="heatmapSwitch">
+            <i class="fa-solid fa-mountain-sun"></i> Mapa de Calor
+          </label>
+        </div>
+        <div class="form-check form-switch mb-1">
+          <input class="form-check-input" type="checkbox" id="transitSwitch">
+          <label class="form-check-label" for="transitSwitch">
+            <i class="fas fa-bus"></i> Transporte Público
+          </label>
+        </div>
+        <div class="form-check form-switch mb-1">
+          <input class="form-check-input" type="checkbox" id="bicycleSwitch">
+          <label class="form-check-label" for="bicycleSwitch">
+            <i class="fas fa-bicycle"></i> Ciclovías
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- PANEL DASHBOARD ESTADÍSTICAS -->
+  <div id="event-stats-panel" class="minimized">
+    <button class="expand-btn" id="expandStatsBtn" title="Mostrar estadísticas">
+      <i class="fas fa-chart-bar"></i>
+    </button>
+    <!-- stats-content -->
+    <div class="stats-content">
+      <button class="collapse-btn" id="collapseStatsBtn" title="Minimizar estadísticas">
+        <i class="fas fa-angle-up"></i>
+      </button>
+      <h3><i class="fas fa-chart-bar"></i>Resumen</h3>
+      <div class="total-label" id="total-eventos-label">Total eventos: --</div>
+      <div id="event-bar-chart"></div>
+      <div id="event-pie-chart"></div>
+
+
+    </div>
+  </div>
+</div>
+
+
+
+<div id="search-box">
+  <input id="pac-input" class="form-control" type="text" placeholder="Buscar dirección o lugar...">
+</div>
+
+<!-- Offcanvas Detalle Formal -->
+<div class="offcanvas offcanvas-end event-detail-formal" tabindex="-1" id="eventoDetalleOffcanvas"
+  aria-labelledby="eventoDetalleOffcanvasLabel">
+  <div class="offcanvas-header pb-0 border-bottom-0 px-4 pt-4">
+    <div>
+      <h5 class="mb-1 fw-semibold" id="eventoDetalleOffcanvasLabel">
+        <i class="fas fa-clipboard-list me-1 text-primary"></i> Detalle del Evento
+      </h5>
+      <span class="text-muted small" id="detalle-fecha"></span>
+    </div>
+    <button type="button" class="btn-close ms-auto" data-bs-dismiss="offcanvas" aria-label="Cerrar"></button>
+  </div>
+  <div class="offcanvas-body px-4 pt-2 pb-4">
+    <div class="evento-detalle-volt bg-white rounded-4 shadow-sm p-0">
+      <ul class="list-group list-group-flush">
+        <li class="list-group-item px-4 py-3 border-0 d-flex flex-column">
+          <span class="text-muted small mb-1"><i class="fas fa-user-edit me-1"></i>Nombre</span>
+          <span id="detalle-nombre" class="fw-semibold text-dark"></span>
+        </li>
+        <li class="list-group-item px-4 py-3 border-0 d-flex flex-column">
+          <span class="text-muted small mb-1"><i class="fas fa-bolt me-1"></i>Prioridad</span>
+          <span id="detalle-prioridad"
+            class="badge rounded-pill bg-prioridad-soft px-3 py-2 border d-inline-flex align-items-center">
+            <i id="detalle-prioridad-icon" class="fa-fw me-1"></i>
+            <span id="detalle-prioridad-text"></span>
+          </span>
+        </li>
+        <li class="list-group-item px-4 py-3 border-0 d-flex flex-column">
+          <span class="text-muted small mb-1"><i class="fas fa-tags me-1"></i>Tipo</span>
+          <span id="detalle-tipo" class="fw-medium"></span>
+        </li>
+        <li class="list-group-item px-4 py-3 border-0 d-flex flex-column">
+          <span class="text-muted small mb-1"><i class="fas fa-tag me-1"></i>Subtipo</span>
+          <span id="detalle-subtipo" class="fw-medium"></span>
+        </li>
+        <li class="list-group-item px-4 py-3 border-0 d-flex flex-column">
+          <span class="text-muted small mb-1"><i class="fas fa-map-marker-alt me-1"></i>Comuna</span>
+          <span id="detalle-comuna" class="fw-medium"></span>
+        </li>
+        <li class="list-group-item px-4 py-3 border-0 d-flex flex-column">
+          <span class="text-muted small mb-1"><i class="fas fa-location-arrow me-1"></i>Ubicación</span>
+          <span id="detalle-latlng" class="text-monospace small"></span>
+        </li>
+        <li class="list-group-item px-4 py-3 border-0 d-flex flex-column">
+          <span class="text-muted small mb-1"><i class="fas fa-align-left me-1"></i>Descripción</span>
+          <span id="detalle-descripcion" class="mt-1"></span>
+        </li>
+      </ul>
+      <div class="px-4 pb-4 pt-2 mt-2 d-flex justify-content-end">
+        <a id="btn-ver-detalle" href="#" class="btn btn-outline-primary px-4">
+          <i class="fas fa-arrow-right me-2"></i>Ver Detalle Completo
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/@googlemaps/markerclusterer/dist/index.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts/dist/echarts.min.js"></script>
+<script>
+  // === CAPAS Y ESTILOS ===
+  const sinLugares = { featureType: "poi", elementType: "labels", stylers: [{ visibility: "off" }] };
+  const darkStyle = [
+    { elementType: "geometry", stylers: [{ color: "#121212" }] },
+    { elementType: "labels.icon", stylers: [{ visibility: "off" }] },
+    { elementType: "labels.text.fill", stylers: [{ color: "#e0e0e0" }] },
+    { elementType: "labels.text.stroke", stylers: [{ color: "#000000" }] },
+    { featureType: "road", elementType: "geometry", stylers: [{ color: "#4fc3f7" }] },
+    { featureType: "road", elementType: "geometry.stroke", stylers: [{ color: "#0288d1" }] },
+    { featureType: "water", elementType: "geometry", stylers: [{ color: "#263238" }] }
+  ];
+  const retroStyle = [
+    { elementType: "geometry", stylers: [{ color: "#ebe3cd" }] },
+    { elementType: "labels.text.fill", stylers: [{ color: "#523735" }] },
+    { elementType: "labels.text.stroke", stylers: [{ color: "#f5f1e6" }] },
+    { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#f8c967" }] },
+    { featureType: "road.highway", elementType: "geometry.stroke", stylers: [{ color: "#e9bc62" }] },
+    { featureType: "water", elementType: "geometry.fill", stylers: [{ color: "#b9d3c2" }] }
+  ];
+
+  // GRADIENTE PERSONALIZADO PARA HEATMAP
+  const customGradient = [
+    'rgba(0, 255, 255, 0)',
+    'rgba(0, 200, 255, 1)',
+    'rgba(0, 120, 255, 1)',
+    'rgba(0, 80, 255, 1)',
+    'rgba(255, 255, 0, 1)',
+    'rgba(255, 140, 0, 1)',
+    'rgba(255, 50, 0, 1)',
+    'rgba(255, 0, 0, 1)',
+    'rgba(140, 0, 0, 1)'
+  ];
+
+  let map, trafficLayer, heatmapLayer, transitLayer, bicycleLayer;
+  let markers = [];
+  let clusterer = null; // <--- CLUSTERER GLOBAL
+
+  // PANEL FLOTANTE
+  document.addEventListener('DOMContentLoaded', function () {
+    const openBtn = document.getElementById('floatingLayersBtn');
+    const sidePanel = document.getElementById('sideLayersPanel');
+    const overlay = document.getElementById('sideLayersOverlay');
+    const closeBtn = document.getElementById('closeLayersPanelBtn');
+    function openPanel() {
+      sidePanel.classList.add('open');
+      overlay.classList.add('show');
+      document.body.style.overflow = 'hidden';
+    }
+    function closePanel() {
+      sidePanel.classList.remove('open');
+      overlay.classList.remove('show');
+      document.body.style.overflow = '';
+    }
+    openBtn.onclick = openPanel;
+    closeBtn.onclick = closePanel;
+    overlay.onclick = closePanel;
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') closePanel();
+    });
+    setTimeout(() => { setPanelMinimized(true); }, 250);
+  });
+
+  const loaderEl = document.getElementById('events-loader');
+
+  function getCustomMarkerIcon(prioridad = "BAJA") {
+    let color = "#888";
+    if (prioridad === "ALTA") color = "#dc3545";
+    else if (prioridad === "MEDIA") color = "#FFD700";
+    else if (prioridad === "BAJA") color = "#198754";
+    const svg = `<svg width="32" height="48" viewBox="0 0 32 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="16" cy="16" rx="12" ry="12" fill="${color}"/>
+      <path d="M16 47C16 47 29 29 16 29C3 29 16 47 16 47Z" fill="${color}"/>
+      <circle cx="16" cy="16" r="6" fill="#fff"/>
+    </svg>`;
+    return {
+      url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+      scaledSize: new google.maps.Size(32, 48),
+      anchor: new google.maps.Point(16, 47)
+    };
+  }
+
+  function pieChartSVG(colors, counts, size = 48) {
+    const total = counts.reduce((a, b) => a + b, 0);
+    if (colors.length === 1) {
+      return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">
+        <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2}" fill="${colors[0]}"/>
+        <circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 3}" fill="none" stroke="#fff" stroke-width="3"/>
+      </svg>`;
+    }
+    let angle = 0, paths = '';
+    for (let i = 0; i < colors.length; i++) {
+      const slice = counts[i] / total * 2 * Math.PI;
+      const x1 = size / 2 + (size / 2) * Math.cos(angle);
+      const y1 = size / 2 + (size / 2) * Math.sin(angle);
+      angle += slice;
+      const x2 = size / 2 + (size / 2) * Math.cos(angle);
+      const y2 = size / 2 + (size / 2) * Math.sin(angle);
+      const largeArc = slice > Math.PI ? 1 : 0;
+      paths += `<path d="M${size / 2},${size / 2} L${x1},${y1} A${size / 2},${size / 2} 0 ${largeArc} 1 ${x2},${y2} z" fill="${colors[i]}"/>`;
+    }
+    paths += `<circle cx="${size / 2}" cy="${size / 2}" r="${size / 2 - 3}" fill="none" stroke="#fff" stroke-width="3"/>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}">${paths}</svg>`;
+  }
+
+  function bounceMarker(marker, amp = 10, speed = 350) {
+    const orig = marker.getPosition();
+    let up = true;
+    setInterval(() => {
+      marker.setPosition(new google.maps.LatLng(
+        orig.lat() + (up ? amp * 1e-5 : 0), orig.lng()
+      ));
+      up = !up;
+      if (!up) marker.setPosition(orig);
+    }, speed);
+  }
+
+  // NUEVA FUNCIÓN DE PESOS
+  function getHeatmapWeight(prioridad) {
+    switch ((prioridad || '').toUpperCase()) {
+      case 'ALTA': return 20;
+      case 'MEDIA': return 5;
+      case 'BAJA': return 1;
+      default: return 1;
+    }
+  }
+
+  // --- ACTUALIZA VISIBILIDAD DE HEATMAP/CLUSTERS/MARCADORES ---
+  function updateMapLayers() {
+    const style = document.querySelector('input[name="mapStyle"]:checked').value;
+    if (style === 'default') {
+      map.setOptions({ styles: [sinLugares] }); map.setMapTypeId('roadmap');
+    } else if (style === 'dark') {
+      map.setOptions({ styles: darkStyle }); map.setMapTypeId('roadmap');
+    } else if (style === 'retro') {
+      map.setOptions({ styles: retroStyle }); map.setMapTypeId('roadmap');
+    } else if (style === 'satellite') {
+      map.setOptions({ styles: [sinLugares] }); map.setMapTypeId('satellite');
+    }
+    document.getElementById('trafficSwitch').checked
+      ? trafficLayer.setMap(map) : trafficLayer.setMap(null);
+
+    // BLOQUE CLAVE:
+    const heatOn = document.getElementById('heatmapSwitch').checked;
+    if (heatOn && heatmapLayer) {
+      heatmapLayer.setMap(map);
+      if (clusterer) clusterer.setMap(null);
+      markers.forEach(m => m.setMap(null));
+    } else {
+      if (heatmapLayer) heatmapLayer.setMap(null);
+      if (clusterer) clusterer.setMap(map);
+      markers.forEach(m => m.setMap(map));
+    }
+
+    document.getElementById('transitSwitch').checked
+      ? transitLayer.setMap(map) : transitLayer.setMap(null);
+    document.getElementById('bicycleSwitch').checked
+      ? bicycleLayer.setMap(map) : bicycleLayer.setMap(null);
+  }
+
+  function showEventoDetalle(evento) {
+    document.getElementById('detalle-fecha').textContent = evento.fecha || '';
+    document.getElementById('detalle-nombre').textContent = evento.nombre || '';
+    const prioridad = (evento.id_subtipo__prioridad || '').toUpperCase();
+    const badge = document.getElementById('detalle-prioridad');
+    const badgeIcon = document.getElementById('detalle-prioridad-icon');
+    const badgeText = document.getElementById('detalle-prioridad-text');
+    badge.classList.remove('prioridad-alta', 'prioridad-media', 'prioridad-baja', 'text-danger', 'text-warning', 'text-success');
+    switch (prioridad) {
+      case 'ALTA':
+        badge.classList.add('prioridad-alta', 'text-danger');
+        badgeIcon.className = 'fas fa-circle-exclamation text-danger me-1';
+        badgeText.textContent = 'Alta';
+        break;
+      case 'MEDIA':
+        badge.classList.add('prioridad-media', 'text-warning');
+        badgeIcon.className = 'fas fa-exclamation-triangle text-warning me-1';
+        badgeText.textContent = 'Media';
+        break;
+      case 'BAJA':
+        badge.classList.add('prioridad-baja', 'text-success');
+        badgeIcon.className = 'fas fa-circle-check text-success me-1';
+        badgeText.textContent = 'Baja';
+        break;
+      default:
+        badgeIcon.className = 'fas fa-question-circle text-secondary me-1';
+        badgeText.textContent = prioridad || 'Sin datos';
+    }
+    document.getElementById('detalle-tipo').textContent = evento.id_tipo__nombre || '';
+    document.getElementById('detalle-subtipo').textContent = evento.id_subtipo__nombre || '';
+    document.getElementById('detalle-comuna').textContent = evento.id_comuna__nombre || '';
+    let lat = evento.latitud, lng = evento.longitud;
+    document.getElementById('detalle-latlng').textContent = (lat && lng) ? `${parseFloat(lat).toFixed(6)}, ${parseFloat(lng).toFixed(6)}` : '';
+    document.getElementById('detalle-descripcion').textContent = evento.detalle || evento.descripcion || '';
+    let btnDetalle = document.getElementById('btn-ver-detalle');
+    btnDetalle.href = `/eventos/${evento.id_evento || evento.id || ''}/`;
+    document.getElementById('btn-ver-detalle').href = `/eventos/${evento.id_evento}/detalle/`;
+    const offcanvas = new bootstrap.Offcanvas(document.getElementById('eventoDetalleOffcanvas'));
+    offcanvas.show();
+  }
+
+  function initMap() {
+    map = new google.maps.Map(document.getElementById('map'), {
+      center: { lat: -33.4489, lng: -70.6693 }, zoom: 11,
+      mapTypeControl: false, streetViewControl: false,
+      styles: [sinLugares]
+    });
+    trafficLayer = new google.maps.TrafficLayer();
+    transitLayer = new google.maps.TransitLayer();
+    bicycleLayer = new google.maps.BicyclingLayer();
+
+    document.querySelectorAll('input[name="mapStyle"]').forEach(radio =>
+      radio.addEventListener('change', updateMapLayers));
+    ['trafficSwitch', 'heatmapSwitch', 'transitSwitch', 'bicycleSwitch'].forEach(id =>
+      document.getElementById(id).addEventListener('change', updateMapLayers)
+    );
+
+    // Buscador Google Places
+    const ac = new google.maps.places.Autocomplete(
+      document.getElementById('pac-input'),
+      { fields: ["geometry", "name"], types: ["geocode", "establishment"] }
+    );
+    ac.bindTo('bounds', map);
+    ac.addListener('place_changed', () => {
+      const p = ac.getPlace();
+      if (p.geometry?.location) {
+        map.panTo(p.geometry.location);
+        map.setZoom(16);
+      }
+    });
+
+    // Fetch eventos y renderiza marcadores + clustering + heatmap
+    fetch('/eventos/')
+      .then(r => r.json())
+      .then(eventos => {
+        markers.forEach(m => m.setMap(null));
+        markers = [];
+        // Marcadores + Clusters
+        const clusterMarkers = eventos.map(e => {
+          const lat = parseFloat(e.latitud),
+            lng = parseFloat(e.longitud);
+          if (isNaN(lat) || isNaN(lng)) return null;
+          const mk = new google.maps.Marker({
+            map, position: { lat, lng },
+            icon: getCustomMarkerIcon(e.id_subtipo__prioridad)
+          });
+          bounceMarker(mk);
+          mk.addListener('click', () => showEventoDetalle(e));
+          markers.push(mk);
+          return mk;
+        }).filter(Boolean);
+
+        // --- CREA EL CLUSTERER Y LO GUARDA GLOBAL ---
+        if (clusterer) clusterer.setMap(null); // Borra anterior si hay
+        clusterer = new markerClusterer.MarkerClusterer({
+          map, markers: clusterMarkers,
+          renderer: {
+            render({ count, markers, position }) {
+              const stats = {};
+              markers.forEach(m => {
+                const match = decodeURIComponent(m.getIcon().url)
+                  .match(/fill="(#[A-Fa-f0-9]{3,6})"/);
+                const c = match ? match[1] : '#888';
+                stats[c] = (stats[c] || 0) + 1;
+              });
+              const cols = Object.keys(stats), cnts = Object.values(stats);
+              const svg = pieChartSVG(cols, cnts, 48);
+              const cl = new google.maps.Marker({
+                position,
+                icon: {
+                  url: 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg),
+                  scaledSize: new google.maps.Size(48, 48),
+                  anchor: new google.maps.Point(24, 24)
+                },
+                label: {
+                  text: String(count),
+                  color: '#fff', fontWeight: 'bold', fontSize: '14px'
+                },
+                zIndex: google.maps.Marker.MAX_ZINDEX + count
+              });
+              // Tooltip cluster
+              const resumen = `
+                <div class="custom-tooltip-cluster">
+                  <div class="tt-title">
+                    <i class="fas fa-layer-group"></i> Eventos agrupados
+                  </div>
+                  <div>
+                    ${cols.map((color, i) => `
+                      <div class="tt-row">
+                        <span class="tt-dot" style="background:${color}"></span>
+                        <span class="tt-cantidad">${cnts[i]} evento${cnts[i] > 1 ? 's' : ''}</span>
+                      </div>
+                    `).join('')}
+                  </div>
+                  <div class="tt-total">
+                    Total agrupados: <span>${count}</span>
+                  </div>
+                </div>
+              `;
+              const info = new google.maps.InfoWindow({ content: resumen });
+              cl.addListener('mouseover', () => info.open(map, cl));
+              cl.addListener('mouseout', () => info.close());
+              return cl;
+            }
+          }
+        });
+
+        // --- HEATMAP MEJORADO ---
+        const heatmapData = eventos
+          .filter(e => e.id_subtipo__prioridad)
+          .map(e => ({
+            location: new google.maps.LatLng(parseFloat(e.latitud), parseFloat(e.longitud)),
+            weight: getHeatmapWeight(e.id_subtipo__prioridad)
+          }));
+
+        if (heatmapLayer) heatmapLayer.setMap(null);
+        heatmapLayer = new google.maps.visualization.HeatmapLayer({
+          data: heatmapData,
+          radius: 120, // <<<<------ ¡AQUI CAMBIA EL AREA DEL "MANCHADO"!
+          opacity: 0.54,
+          gradient: customGradient
+        });
+        if (document.getElementById('heatmapSwitch').checked) heatmapLayer.setMap(map);
+
+        renderStatsPanel(eventos);
+        updateMapLayers(); // <-- Para que se sincronice bien la visibilidad
+      })
+      .finally(() => { loaderEl.style.display = 'none'; });
+  }
+  window.initMap = initMap;
+
+  // ===== DASHBOARD PANEL INTERACTIVO =====
+  const statPanel = document.getElementById('event-stats-panel');
+  const collapseBtn = document.getElementById('collapseStatsBtn');
+  const expandBtn = document.getElementById('expandStatsBtn');
+  function setPanelMinimized(minimized) {
+    if (minimized) {
+      statPanel.classList.add('minimized');
+      expandBtn.style.display = 'flex';
+    } else {
+      statPanel.classList.remove('minimized');
+      expandBtn.style.display = 'none';
+    }
+  }
+  if (collapseBtn) collapseBtn.onclick = () => setPanelMinimized(true);
+  if (expandBtn) expandBtn.onclick = () => setPanelMinimized(false);
+
+  function updateDashboardTheme() {
+    if (document.body.classList.contains('dashboard-dark')) {
+      statPanel.classList.add('dashboard-dark');
+    } else {
+      statPanel.classList.remove('dashboard-dark');
+    }
+  }
+  updateDashboardTheme();
+  const bodyObserver = new MutationObserver(mutations => {
+    mutations.forEach(mutation => {
+      if (mutation.attributeName === "class") updateDashboardTheme();
+    });
+  });
+  bodyObserver.observe(document.body, { attributes: true });
+
+  // -------- DASHBOARD GRÁFICOS ECHARTS --------
+  let barChartInstance, pieChartInstance;
+  function renderStatsPanel(eventos) {
+    const counts = { BAJA: 0, MEDIA: 0, ALTA: 0 };
+    const tipoCounts = {};
+    eventos.forEach(ev => {
+      const p = (ev.id_subtipo__prioridad || '').toUpperCase();
+      if (counts[p] !== undefined) counts[p]++;
+      const tipo = ev.id_tipo__nombre || "Sin Tipo";
+      tipoCounts[tipo] = (tipoCounts[tipo] || 0) + 1;
+    });
+    const total = eventos.length;
+    document.getElementById('total-eventos-label').textContent = "Eventos activos: " + total;
+
+    var barDom = document.getElementById('event-bar-chart');
+    if (!barChartInstance) barChartInstance = echarts.init(barDom);
+    barChartInstance.setOption({
+      title: { text: 'Prioridad de Eventos', left: 'center', textStyle: { color: '#c2e3fc', fontSize: 18, fontWeight: 'bold' } },
+      xAxis: {
+        type: 'category', data: ['Baja', 'Media', 'Alta'],
+        axisLabel: {
+          fontWeight: 700, fontSize: 15,
+          color: function (value, idx) {
+            return ['#198754', '#FFD700', '#dc3545'][idx];
+          }
+        }
+      },
+      yAxis: { type: 'value', show: false },
+      series: [{
+        data: [counts.BAJA, counts.MEDIA, counts.ALTA],
+        type: 'bar',
+        barWidth: 42,
+        itemStyle: {
+          borderRadius: [4, 4, 0, 0],
+          color: function (params) {
+            return ['#198754', '#FFD700', '#dc3545'][params.dataIndex];
+          }
+        },
+        label: {
+          show: true, position: 'top',
+          fontWeight: 800, fontSize: 16, color: '#23262f'
+        }
+      }],
+      grid: { left: 10, right: 10, top: 20, bottom: 12, containLabel: true },
+      tooltip: { show: true }
+    });
+
+    var pieDom = document.getElementById('event-pie-chart');
+    if (!pieChartInstance) pieChartInstance = echarts.init(pieDom);
+    const tipoLabels = Object.keys(tipoCounts);
+    const tipoData = tipoLabels.map(label => ({ value: tipoCounts[label], name: label }));
+    const tipoColors = [
+      '#198754', '#FFD700', '#dc3545', '#6f42c1', '#17a2b8', '#fd7e14', '#343a40', '#20c997', '#ffc107'
+    ];
+    pieChartInstance.setOption({
+      title: { text: 'Distribución por Tipo', left: 'center', textStyle: { color: '#c2e3fc', fontSize: 18, fontWeight: 'bold' } },
+      legend: { show: false },
+      tooltip: { trigger: 'item', formatter: '{b}: {c} ({d}%)' },
+      series: [{
+        type: 'pie',
+        radius: '68%',
+        data: tipoData,
+        itemStyle: {
+          borderRadius: 8,
+          borderColor: '#fff',
+          borderWidth: 3,
+          color: function (params) {
+            return tipoColors[params.dataIndex % tipoColors.length];
+          }
+        },
+        label: { fontWeight: 700, fontSize: 15 }
+      }]
+    });
+
+    let legendHtml = '';
+    tipoLabels.forEach((lbl, i) => {
+      legendHtml += `<span class="legend-dot" style="background:${tipoColors[i % tipoColors.length]}"></span> ${lbl}`;
+      if (i < tipoLabels.length - 1) legendHtml += ' &nbsp; ';
+    });
+    document.getElementById('event-pie-legend').innerHTML = legendHtml;
+  }
+
+  function fetchAndUpdateStatsPanel(params = {}) {
+    let url = '/eventos/';
+    if (params && Object.keys(params).length) {
+      url += '?' + new URLSearchParams(params).toString();
+    }
+    fetch(url)
+      .then(r => r.json())
+      .then(data => renderStatsPanel(data));
+  }
+  fetchAndUpdateStatsPanel();
+
+</script>
+<script
+  src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDBEtk__sGNmNnvoWuZ3oiJgKhtSnlseIs&callback=initMap&libraries=places,visualization"
+  async defer></script>
+
+
+{% endblock %}

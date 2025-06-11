@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% load static %}
+{% block content %}
+<div class="container py-4" style="max-width:1200px;">
+    <!-- Card principal -->
+    <div class="card shadow-sm border-0">
+        <!-- Título azul institucional -->
+        <div class="card-header py-4" style="background: #113662; border-bottom: none; border-radius: 12px 12px 0 0;">
+            <h3 class="mb-0 fw-semibold text-white" style="font-size:1.7rem;">
+                <i class="fa-solid fa-user-pen me-2"></i> Editar Persona
+            </h3>
+        </div>
+        <div class="card-body bg-white">
+            <form method="post" autocomplete="off" novalidate>
+                {% csrf_token %}
+                <!-- General Information -->
+                <h5 class="fw-bold mb-3" style="font-size:1.2rem;">General information</h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Nombre</label>
+                        {{ form.nombre }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Apellido Paterno</label>
+                        {{ form.paterno }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Apellido Materno</label>
+                        {{ form.materno }}
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">RUT</label>
+                        {{ form.rut }}
+                        <div id="rut-error" class="error-message text-danger small mt-1" style="display:none;">RUT inválido.</div>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Fecha de Nacimiento</label>
+                        {{ form.fecha_nacimiento }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Género</label>
+                        {{ form.id_genero }}
+                    </div>
+                </div>
+                <!-- Información de contacto -->
+                <h5 class="fw-bold mb-3 mt-4" style="font-size:1.2rem;">Información de contacto</h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-6">
+                        <label class="form-label small mb-1">Email</label>
+                        {{ form.email }}
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label small mb-1">Teléfono</label>
+                        {{ form.telefono }}
+                    </div>
+                </div>
+                <!-- Ubicación y nacionalidad -->
+                <h5 class="fw-bold mb-3 mt-4" style="font-size:1.2rem;">Ubicación y nacionalidad</h5>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Nacionalidad</label>
+                        {{ form.id_pais }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Estado Civil</label>
+                        {{ form.id_estado_civil }}
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small mb-1">Comuna</label>
+                        {{ form.id_comuna }}
+                    </div>
+                </div>
+                <div class="row g-3 mb-3">
+                    <div class="col-md-12">
+                        <label class="form-label small mb-1">Dirección</label>
+                        {{ form.direccion }}
+                    </div>
+                </div>
+                <!-- Botones -->
+                <div class="d-flex justify-content-end gap-3 mt-4">
+                    <button type="submit" class="btn btn-primary px-5 py-2" style="font-size:1rem;">
+                        <i class="fas fa-save me-2"></i> Guardar Cambios
+                    </button>
+                    <a href="{% url 'persona:list' %}" class="btn btn-secondary px-5 py-2" style="font-size:1rem;">
+                        <i class="fas fa-times me-2"></i> Cancelar
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+<!-- jQuery para validación en tiempo real -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script>
+    function getCookie(name) {
+        let cookieValue = null;
+        if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+                const cookie = cookies[i].trim();
+                if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                    cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                    break;
+                }
+            }
+        }
+        return cookieValue;
+    }
+    const csrftoken = getCookie('csrftoken');
+    $.ajaxSetup({
+        headers: {
+            'X-CSRFToken': csrftoken
+        }
+    });
+    $(document).ready(function () {
+        const rutInput = $('#id_rut');
+        const errorDiv = $('#rut-error');
+        let debounceTimer;
+        rutInput.on('input', function () {
+            clearTimeout(debounceTimer);
+            const rutValue = rutInput.val().trim();
+            if (rutValue === '') {
+                errorDiv.hide();
+                return;
+            }
+            debounceTimer = setTimeout(function () {
+                $.ajax({
+                    url: "{% url 'persona:validar_run_ajax' %}",
+                    method: 'POST',
+                    data: { rut: rutValue },
+                    success: function (response) {
+                        if (response.valido) {
+                            errorDiv.hide();
+                        } else {
+                            errorDiv.text(response.mensaje);
+                            errorDiv.show();
+                        }
+                    },
+                    error: function () {
+                        errorDiv.text('Error al validar el RUT.');
+                        errorDiv.show();
+                    },
+                });
+            }, 300);
+        });
+    });
+</script>
+<style>
+    .form-label {
+        font-size: 0.96rem !important;
+        font-weight: 600;
+        color: #353b4a;
+    }
+    .form-control, .form-select {
+        font-size: 0.92rem !important;
+        border-radius: 7px;
+        min-height: 38px !important;
+    }
+    .btn-primary {
+        background-color: #113662;
+        border: none;
+    }
+    .btn-primary:hover, .btn-primary:focus {
+        background-color: #0e2d50;
+        border: none;
+    }
+    .btn-secondary {
+        background: #f3f5f8;
+        color: #113662;
+        border: none;
+        font-weight: 600;
+    }
+    .btn-secondary:hover, .btn-secondary:focus {
+        background: #dde4ef;
+        color: #0e2d50;
+    }
+</style>
+{% endblock %}

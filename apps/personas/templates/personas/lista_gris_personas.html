@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h2>Administrar Lista Gris de Personas</h2>
+  <table id="personasTable" border="1" cellspacing="0" cellpadding="5">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Nombre</th>
+        <th>Estado</th>
+        <th>Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for persona in personas %}
+      <tr id="persona-{{ persona.id_persona }}">
+        <td>{{ persona.id_persona }}</td>
+        <td>{{ persona.nombre }}</td>
+        <td class="estado">
+          {% if persona.esta_en_lista %}
+            Activo
+          {% else %}
+            Inactivo
+          {% endif %}
+        </td>
+        <td>
+          <button class="toggle-button"
+                  data-id="{{ persona.id_persona }}"
+                  data-accion="{% if persona.esta_en_lista %}quitar{% else %}agregar{% endif %}">
+            {% if persona.esta_en_lista %}
+              Quitar
+            {% else %}
+              Agregar
+            {% endif %}
+          </button>
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Se incluye jQuery (si no lo tienes ya en tu proyecto) -->
+  <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+  <script>
+    $(document).ready(function(){
+      $('.toggle-button').click(function(){
+        var btn = $(this);
+        var personaId = btn.data('id');
+        var accion = btn.data('accion');
+
+        $.ajax({
+          url: "{% url 'persona:lista_gris_persona' %}",
+          type: "POST",
+          data: {
+            'action': accion,
+            'id_persona': personaId,
+            'csrfmiddlewaretoken': '{{ csrf_token }}'
+          },
+          success: function(response) {
+            if(response.status === "success"){
+              var estadoCell = $('#persona-' + personaId).find('.estado');
+              if(response.esta_en_lista){
+                estadoCell.text('Activo');
+                btn.text('Quitar');
+                btn.data('accion', 'quitar');
+              } else {
+                estadoCell.text('Inactivo');
+                btn.text('Agregar');
+                btn.data('accion', 'agregar');
+              }
+            } else {
+              alert("Error: " + response.message);
+            }
+          },
+          error: function(){
+            alert("Error en la petición AJAX.");
+          }
+        });
+      });
+    });
+  </script>
+{% endblock %}

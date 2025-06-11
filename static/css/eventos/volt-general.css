@@ -1,0 +1,16 @@
+body {
+    background: #f8fafd;
+    font-family: 'Inter', 'Segoe UI', Arial, sans-serif;
+    
+}
+
+html,
+body {
+    overflow: auto;
+    scrollbar-width: none;
+}
+
+html::-webkit-scrollbar,
+body::-webkit-scrollbar {
+    display: none;
+}

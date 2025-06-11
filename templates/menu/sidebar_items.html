@@ -1,0 +1,241 @@
+{% load group_filters %}
+<ul class="nav flex-column" id="sidebar-nav">
+    <!-- SIEMPRE VISIBLES -->
+    <li class="nav-item">
+        <a href="{% url 'mapa:mostrar_mapa'%}" class="nav-link active">
+            <span class="sidebar-icon"><i class="fas fa-home"></i></span>
+            <span class="sidebar-text">Dashboard</span>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a href="{% url 'evento:reporte_eventos'%}" class="nav-link">
+            <span class="sidebar-icon"><i class="fa-solid fa-location-dot"></i></span>
+            <span class="sidebar-text">Gestión Eventos</span>
+        </a>
+    </li>
+
+    <li class="nav-item">
+        <a href="{% url 'mapa:dashboard'%}" class="nav-link">
+            <span class="sidebar-icon"><i class="fa-solid fa-chart-column"></i></span>
+            <span class="sidebar-text">Estadísticas</span>
+        </a>
+    </li>
+   
+    
+    <!-- SOLO PARA ADMINISTRADORES -->
+    {% if request.user|in_groups:"Administrador" %}
+        <!-- PERSONAS -->
+        <li class="nav-item">
+            <a class="nav-link collapsed d-flex align-items-center" data-bs-toggle="collapse" href="#submenu-personas"
+                role="button" aria-expanded="false" aria-controls="submenu-personas">
+                <span class="sidebar-icon"><i class="fa-solid fa-users"></i></span>
+                <span class="sidebar-text">Personas</span>
+                <span class="link-arrow ms-auto"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="multi-level collapse" id="submenu-personas" data-bs-parent="#sidebar-nav">
+                <ul class="flex-column nav ps-4">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'persona:list' %}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-user-edit"></i></span> Personas
+                        </a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </li>
+        <!-- ENTIDADES -->
+        <li class="nav-item">
+            <a class="nav-link collapsed d-flex align-items-center" data-bs-toggle="collapse" href="#submenu-entidades"
+                role="button" aria-expanded="false" aria-controls="submenu-entidades">
+                <span class="sidebar-icon"><i class="fa-solid fa-calendar-check"></i></span>
+                <span class="sidebar-text">Empresas</span>
+                <span class="link-arrow ms-auto"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="multi-level collapse" id="submenu-entidades" data-bs-parent="#sidebar-nav">
+                <ul class="flex-column nav ps-4">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'empresa:list-empresas'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-building-flag"></i></span> Entidades
+                        </a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </li>
+        <!-- DISPOSITIVOS -->
+        <li class="nav-item">
+            <a class="nav-link collapsed d-flex align-items-center" data-bs-toggle="collapse" href="#submenu-dispositivos"
+                role="button" aria-expanded="false" aria-controls="submenu-dispositivos">
+                <span class="sidebar-icon"><i class="fa-solid fa-sitemap"></i></span>
+                <span class="sidebar-text">Dispositivos</span>
+                <span class="link-arrow ms-auto"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="multi-level collapse" id="submenu-dispositivos" data-bs-parent="#sidebar-nav">
+                <ul class="flex-column nav ps-4">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dispositivo:listar_tipos_dispositivos'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-receipt"></i></span> Dispositivos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dispositivo:listar_tipos_sensores'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-land-mine-on"></i></span> Sensores
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dispositivo:listar_companias_sim'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-square-phone-flip"></i></span> Compañias Telco
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dispositivo:listar_tipos_sim'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-sim-card"></i></span> Tipos SIM
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'dispositivo:listar_dispositivos'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-building-circle-exclamation"></i></span> Dispositivos Gestion
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        <!-- VEHÍCULOS -->
+        <li class="nav-item">
+            <a class="nav-link collapsed d-flex align-items-center" data-bs-toggle="collapse" href="#submenu-vehiculos"
+                role="button" aria-expanded="false" aria-controls="submenu-vehiculos">
+                <span class="sidebar-icon"><i class="fa-solid fa-car"></i></span>
+                <span class="sidebar-text">Vehículos</span>
+                <span class="link-arrow ms-auto"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="multi-level collapse" id="submenu-vehiculos" data-bs-parent="#sidebar-nav">
+                <ul class="flex-column nav ps-4">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'vehiculos:listar_marcas_vehiculos'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-tags"></i></span> Marcas
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'vehiculos:listar_tipos_vehiculos'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-car-on"></i></span> Tipo Vehículo
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'vehiculos:listar_vehiculos'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-car-side"></i></span> Nuevo Vehículo
+                        </a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </li>
+        <!-- ESTADOS -->
+        <li class="nav-item">
+            <a class="nav-link collapsed d-flex align-items-center" data-bs-toggle="collapse" href="#submenu-estados"
+                role="button" aria-expanded="false" aria-controls="submenu-estados">
+                <span class="sidebar-icon"><i class="fa-solid fa-sitemap"></i></span>
+                <span class="sidebar-text">Estados</span>
+                <span class="link-arrow ms-auto"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="multi-level collapse" id="submenu-estados" data-bs-parent="#sidebar-nav">
+                <ul class="flex-column nav ps-4">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'mantenedor:listar_estados_civiles'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-ring"></i></span> Estado civil
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'mantenedor:listar_genero'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-venus-mars"></i></span> Género
+                        </a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </li>
+        <!-- ALERTAS -->
+        <li class="nav-item">
+            <a class="nav-link collapsed d-flex align-items-center" data-bs-toggle="collapse" href="#submenu-alertas"
+                role="button" aria-expanded="false" aria-controls="submenu-alertas">
+                <span class="sidebar-icon"><i class="fa-solid fa-bell"></i></span>
+                <span class="sidebar-text">Alertas</span>
+                <span class="link-arrow ms-auto"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="multi-level collapse" id="submenu-alertas" data-bs-parent="#sidebar-nav">
+                <ul class="flex-column nav ps-4">
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'evento:listar_estados_evento'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-scale-balanced"></i></span> Estados eventos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'evento:listar_tipo'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-flag"></i></span> Tipos eventos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'evento:mostrar_evento'%}">
+                            <span class="sidebar-subicon"><i class="fa-regular fa-flag"></i></span> Subtipos eventos
+                        </a>
+                    </li>
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'evento:listar_procedencias'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-map-pin"></i></span> Procedencia eventos
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'persona:listar_tipos_personas'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-people-group"></i></span> Tipos persona
+                        </a>
+                    </li>
+                    
+                </ul>
+            </div>
+        </li>
+        <!-- REPORTES -->
+        <li class="nav-item">
+            <a class="nav-link collapsed d-flex align-items-center" data-bs-toggle="collapse" href="#submenu-reportes"
+                role="button" aria-expanded="false" aria-controls="submenu-reportes">
+                <span class="sidebar-icon"><i class="fa-solid fa-chart-line"></i></span>
+                <span class="sidebar-text">Reportes</span>
+                <span class="link-arrow ms-auto"><i class="fas fa-chevron-down"></i></span>
+            </a>
+            <div class="multi-level collapse" id="submenu-reportes" data-bs-parent="#sidebar-nav">
+                <ul class="flex-column nav ps-4">
+                    
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'mapa:mapa_eventos'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-circle-nodes"></i></span> Reporte Cluster
+                        </a>
+                    </li>
+                                        
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'utilidades:buscar_persona'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-person-circle-exclamation"></i></span> Personas por evento
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'utilidades:buscar_vehiculo'%}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-car-burst"></i></span> Eventos por vehículo
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{% url 'mapa:infoscan' %}">
+                            <span class="sidebar-subicon"><i class="fa-solid fa-chart-simple"></i></span> Infoscan
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+    {% endif %}
+    <!-- AJUSTES Y CERRAR SESIÓN (siempre visibles) -->
+    <li class="nav-item"><a href="#" class="nav-link">
+            <span class="sidebar-icon"><i class="fa-solid fa-cog"></i></span>
+            <span class="sidebar-text">Ajustes</span>
+        </a></li>
+    <li class="nav-item mt-2"><a href="#" class="nav-link text-danger">
+            <span class="sidebar-icon"><i class="fa-solid fa-sign-out-alt"></i></span>
+            <span class="sidebar-text">Cerrar sesión</span>
+        </a></li>
+</ul>

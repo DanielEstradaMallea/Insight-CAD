@@ -1,0 +1,41 @@
+<!-- Modal de Red de Apoyo -->
+<div class="modal fade" id="redApoyoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Administrar Red de Apoyo</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form id="formRedApoyo">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Nombre:</label>
+                        <input type="text" class="form-control" id="nombreRed" required>
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Teléfono:</label>
+                            <input type="text" class="form-control" id="telefonoRed">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email:</label>
+                            <input type="email" class="form-control" id="emailRed">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn btn-success mt-3" id="btnGuardarRed">
+                        <i class="fas fa-save me-2"></i>Guardar
+                    </button>
+                </form>
+
+                <div class="mt-4">
+                    <h6 class="border-bottom pb-2">Redes Registradas</h6>
+                    <div id="listaRedes" class="list-group mt-2"></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            </div>
+        </div>
+    </div>
+</div>

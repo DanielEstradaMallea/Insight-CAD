@@ -1,0 +1,1315 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% load static %}
+
+
+<title>INFOSCAN</title>
+{# Se asume que Bootstrap ya se incluye en el template base #}
+
+<!-- Leaflet y Leaflet.draw -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.css" />
+<!-- Leaflet.markercluster CSS -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster/dist/MarkerCluster.Default.css" />
+
+<!-- Fuentes -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+<!-- Flatpickr con tema material_blue y localización en español -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/material_blue.css">
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
+
+<style>
+    :root {
+        --primary-color: #6366f1;
+        --secondary-color: #3b82f6;
+        --accent-color: #8b5cf6;
+        --background-dark: #0f172a;
+        --card-bg: #1e293b;
+        --text-primary: #f8fafc;
+        --text-secondary: #94a3b8;
+    }
+
+    /* ===== Gráficos y contenedores generales ===== */
+    .chart-container,
+    .chart-container-s {
+        position: relative;
+        height: 100%;
+    }
+
+    .chart-container-s {
+        height: 350px;
+        padding-top: 40px;
+    }
+
+    .img-thumbnail {
+        transition: transform 0.2s;
+        object-fit: cover;
+    }
+
+    .img-thumbnail:hover {
+        transform: scale(1.05);
+        cursor: pointer;
+    }
+
+    .cursor-pointer {
+        cursor: pointer;
+    }
+
+    /* ===== Mapa y Wrapper ===== */
+    #map2 {
+        height: 100%;
+        width: 100%;
+        border-radius: 8px;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .map-wrapper {
+        position: relative;
+        height: 100%;
+    }
+
+    .row {
+        width: 100%;
+    }
+
+    .column {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        margin: 5px;
+        padding: 20px;
+        max-height: 950px;
+        overflow-y: auto;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .card {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+            0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        flex: 1;
+        min-width: 300px;
+        overflow-y: auto;
+    }
+
+    .chart-container {
+        height: 100%;
+    }
+
+    .chart-container-s {
+        height: 350px;
+        background: rgb(31, 33, 63);
+        border-radius: 12px;
+        width: 100%;
+        margin-bottom: 10px;
+    }
+
+    #event-counter {
+        text-align: centerr;
+        color: var(--accent-color);
+        font-size: 1.2rem;
+        margin-bottom: 20px;
+        background-color: #0f172a;
+        border-radius: 12px;
+    }
+
+    .export-buttons {
+        margin-bottom: 20px;
+        text-align: center;
+    }
+
+    .export-buttons button {
+        margin: 5px;
+        padding: 10px 20px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    .export-buttons button:hover {
+        background-color: var(--secondary-color);
+    }
+
+    /* ===== Botón para Modal Filtros ===== */
+    .modal-button {
+        position: fixed;
+        top: 65px;
+        right: 20px;
+        padding: 12px 24px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        z-index: 10;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        transition: background-color 0.3s ease;
+        font-size: 1rem;
+    }
+
+    .modal-button:hover {
+        background-color: var(--secondary-color);
+    }
+
+    /* ===== Modal Filtros y Exportación ===== */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+    }
+
+    .modal-content {
+        background-color: var(--card-bg);
+        padding: 20px;
+        border-radius: 12px;
+        width: 400px;
+        max-width: 90%;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        position: relative;
+    }
+
+    .modal-content h2 {
+        margin-top: 0;
+        font-size: 1.5rem;
+        color: var(--text-primary);
+    }
+
+    .close {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: var(--text-secondary);
+        font-size: 24px;
+        cursor: pointer;
+    }
+
+    .close:hover {
+        color: var(--text-primary);
+    }
+
+    .filtro-fechas {
+        margin-bottom: 20px;
+    }
+
+    .filtro-fechas label {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--text-primary);
+    }
+
+    .filtro-fechas input#date-range {
+        width: 100%;
+        padding: 10px 15px;
+        border-radius: 8px;
+        border: 1px solid var(--accent-color);
+        background-color: var(--background-dark);
+        color: var(--text-primary);
+        cursor: pointer;
+    }
+
+    .filtro-fechas input#date-range:focus {
+        outline: none;
+        border-color: var(--primary-color);
+    }
+
+    .modal-action-button {
+        width: 100%;
+        padding: 10px;
+        background-color: var(--primary-color);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        margin-top: 10px;
+        transition: background-color 0.3s ease;
+        text-align: left;
+    }
+
+    .modal-action-button i {
+        margin-right: 10px;
+    }
+
+    .modal-action-button:hover {
+        background-color: var(--secondary-color);
+    }
+
+    /* ===== Vista Previa de Capas ===== */
+    #basemap-preview {
+        display: block;
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        background: rgba(0, 0, 0, 0.8);
+        padding: 10px;
+        border-radius: 8px;
+        z-index: 1100;
+        max-height: 120px;
+        overflow-y: auto;
+    }
+
+    #basemap-preview .preview-container {
+        display: flex;
+        justify-content: space-around;
+        gap: 10px;
+    }
+
+    #basemap-preview img {
+        width: 80px;
+        height: 60px;
+        cursor: pointer;
+        border: 2px solid transparent;
+    }
+
+    #basemap-preview img:hover {
+        border: 2px solid var(--primary-color);
+    }
+
+    /* ===== Modal para Ampliar Gráficos ===== */
+    .modal-grafico {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.7);
+        align-items: center;
+        justify-content: center;
+        z-index: 1100;
+    }
+
+    .modal-grafico-contenido {
+        background-color: var(--card-bg);
+        border-radius: 12px;
+        padding: 20px;
+        width: 90%;
+        height: 90%;
+    }
+
+    .cerrar-modal-grafico {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        font-size: 30px;
+        color: var(--text-secondary);
+        cursor: pointer;
+    }
+
+    .cerrar-modal-grafico:hover {
+        color: var(--text-primary);
+    }
+
+    /* ===== Modal de Detalles del Evento con navegación de clúster ===== */
+
+    /* Footer para navegación de clúster */
+    #eventModal .modal-footer {
+        display: none;
+        justify-content: space-between;
+        padding-top: 10px;
+    }
+
+    #eventModal .modal-footer button {
+        padding: 5px 10px;
+        background-color: var(--secondary-color);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+    }
+
+    #eventModal .modal-footer button:hover {
+        background-color: var(--primary-color);
+    }
+
+    @media (max-width: 768px) {
+        #map2 {
+            height: 300px;
+        }
+
+        .chart-container {
+            height: 250px;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .dashboard-header h1 {
+            font-size: 20px;
+        }
+    }
+</style>
+
+
+<!-- Modal para Filtros y Exportación -->
+<div id="modal-exportar" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="cerrarModal()">&times;</span>
+        <h2>Opciones de Filtrado y Exportación</h2>
+        <div class="filtro-fechas">
+            <label for="date-range">Selecciona Rango de Fechas:</label>
+            <input type="text" id="date-range" placeholder="Selecciona fecha(s)">
+            <button onclick="aplicarFiltroFechas()" class="modal-action-button">
+                <i class="fas fa-filter"></i> Aplicar Filtro
+            </button>
+            <button onclick="resetearFechas()" class="modal-action-button">
+                <i class="fas fa-eraser"></i> Resetear Fechas
+            </button>
+        </div>
+        <div class="export-options">
+            <button onclick="exportToExcel()" class="modal-action-button">
+                <i class="fas fa-file-excel"></i> Exportar a Excel
+            </button>
+            <button onclick="exportToPDF()" class="modal-action-button">
+                <i class="fas fa-file-pdf"></i> Exportar a PDF
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Contenido Principal -->
+<div class="row" style="padding:10px;">
+    <!-- Comuna Chart -->
+    <div class="col-md-2 column">
+        <div id="histogram-comuna" class="chart-container"></div>
+    </div>
+    <!-- Mapa con wrapper (incluye vista previa de capas y modal de detalles integrado) -->
+    <div class="col-md-5 column">
+        <div class="map-wrapper" style="height: 100%; position: relative;">
+            <div id="map2"></div>
+            <div id="basemap-preview">
+                <div class="preview-container">
+                    <img src="https://tile.openstreetmap.org/5/16/12.png" alt="OSM Standard" title="OSM Standard"
+                        onclick="changeBasemap('OSM Standard')">
+                    <img src="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/5/16/12"
+                        alt="Esri World Imagery" title="Esri World Imagery"
+                        onclick="changeBasemap('Esri World Imagery')">
+                    <img src="https://a.basemaps.cartocdn.com/dark_all/5/16/12.png" alt="CartoDB Dark Matter"
+                        title="CartoDB Dark Matter" onclick="changeBasemap('CartoDB Dark Matter')">
+                    <img src="https://tile.opentopomap.org/5/16/12.png" alt="OpenTopoMap" title="OpenTopoMap"
+                        onclick="changeBasemap('OpenTopoMap')">
+                </div>
+            </div>
+            <!-- Modal de Detalles del Evento (centrado en el map-wrapper) -->
+            <div id="eventModal" class="modal" tabindex="-1">
+                <div class="modal-dialog">
+                    <div class="modal-content bg-dark text-light">
+                        <div class="modal-header border-secondary">
+                            <h5 class="modal-title">Detalles del Evento</h5>
+                            <button type="button" class="btn-close btn-close-white"
+                                onclick="cerrarEventModal()"></button>
+                        </div>
+                        <div class="modal-body" id="eventDetailsContent"></div>
+                        <div class="modal-footer">
+                            <button onclick="prevClusterEvent()">&larr; Prev</button>
+                            <button onclick="nextClusterEvent()">Next &rarr;</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- Time Chart -->
+    <div class="col-md-2 column">
+        <div id="histogram-time" class="chart-container"></div>
+    </div>
+    <div class="col-md-2 column">
+        <div class="row">
+            <!-- Contador de Eventos -->
+            <div class="col-md-1 text-center" style="width:100%;">
+                <div id="event-counter">
+                    <h5 style="font-size:16px;">Eventos Encontrados</h5>
+                    <i class="fa-sharp fa-solid fa-location-dot fa-flip" style="color:#ce0909;"></i>
+                    <span class="ms-2">-</span>
+                </div>
+                <!-- Priority Chart -->
+                <div class="text-center">
+                    <div id="histogram-prioridad" class="chart-container-s"></div>
+                </div>
+                <!-- Report Type Chart -->
+                <div class="text-center">
+                    <div id="histogram-tipo-reporte" class="chart-container-s"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Botón para abrir Modal Filtros y Exportación -->
+<button class="modal-button" onclick="abrirModal()"><i class="fa-solid fa-calendar-days"></i> <i
+        class="fa-solid fa-file-export"></i></button>
+
+<!-- Modal para Ampliar Gráficos -->
+<div id="modal-grafico" class="modal-grafico">
+    <span class="cerrar-modal-grafico" onclick="cerrarModalGrafico()">&times;</span>
+    <div class="modal-grafico-contenido">
+        <div id="grafico-ampliado" style="height:100%; width:100%;"></div>
+    </div>
+</div>
+
+<!-- Cargar librerías: Leaflet, MarkerCluster, Highcharts, Turf y jsPDF -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster/dist/leaflet.markercluster.js"></script>
+<script src="https://code.highcharts.com/highcharts.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.24/jspdf.plugin.autotable.min.js"></script>
+
+<script>
+    // Primero definimos las funciones para abrir y cerrar el modal de detalles
+    function abrirEventModal() {
+        document.getElementById('eventModal').style.display = 'flex';
+    }
+    function cerrarEventModal() {
+        document.getElementById('eventModal').style.display = 'none';
+    }
+
+    let map, markers = [];
+    let markerClusterGroup = null;
+    let activeFilters = {
+        ppriority: null,
+        comuna: null,
+        tipoReporte: null,
+        timeRange: null,
+        fechaInicio: null,
+        fechaFin: null
+    };
+    let eventosData = [], filteredEvents = [];
+    let charts = {};
+    let baseLayersObj = {};
+    // Variables para clúster de eventos
+    let clusterEvents = [];
+    let currentClusterIndex = 0;
+
+    // Crear panes para base y marcadores
+    function crearPanes() {
+        map.createPane('tilePane');
+        map.getPane('tilePane').style.zIndex = 200;
+        map.createPane('markerPane');
+        map.getPane('markerPane').style.zIndex = 600;
+    }
+
+    Highcharts.setOptions({
+        chart: { backgroundColor: 'transparent', style: { fontFamily: 'Inter, sans-serif' } },
+        title: { style: { color: '#00ff00' } },
+        xAxis: { labels: { style: { color: '#00ff00' } }, gridLineColor: '#333' },
+        yAxis: { labels: { style: { color: '#00ff00' } }, gridLineColor: '#333' },
+        plotOptions: {
+            series: { cursor: 'pointer', point: { events: { click: function () { handleChartClick(this); } } } }
+        }
+    });
+
+    function initMap() {
+        const osmStandard = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '&copy; OpenStreetMap contributors',
+            pane: 'tilePane'
+        });
+        const esriWorldImagery = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+            attribution: 'Tiles &copy; Esri, USGS, NOAA',
+            pane: 'tilePane'
+        });
+        const cartoDarkMatter = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+            attribution: '&copy; OpenStreetMap contributors &copy; CARTO',
+            subdomains: 'abcd',
+            pane: 'tilePane'
+        });
+        const openTopoMap = L.tileLayer('https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png', {
+            attribution: 'Map data: &copy; OpenStreetMap contributors, SRTM | Map style: &copy; OpenTopoMap (CC-BY-SA)',
+            subdomains: 'abc',
+            pane: 'tilePane'
+        });
+
+        baseLayersObj = {
+            "OSM Standard": osmStandard,
+            "Esri World Imagery": esriWorldImagery,
+            "CartoDB Dark Matter": cartoDarkMatter,
+            "OpenTopoMap": openTopoMap
+        };
+
+        map = L.map('map2', { layers: [osmStandard] }).setView([-33.45, -70.65], 11);
+        crearPanes();
+        L.control.layers(baseLayersObj, {}).addTo(map);
+
+        drawnItems = new L.FeatureGroup();
+        map.addLayer(drawnItems);
+
+        var drawControl = new L.Control.Draw({
+            draw: { polygon: true, marker: false, polyline: false, circle: false, rectangle: false, circlemarker: false },
+            edit: { featureGroup: drawnItems, remove: false, edit: false }
+        });
+        map.addControl(drawControl);
+        map.on(L.Draw.Event.CREATED, function (event) {
+            const layer = event.layer;
+            drawnItems.clearLayers();
+            drawnItems.addLayer(layer);
+            applyFilters();
+        });
+        function deleteAllLayers() {
+            drawnItems.clearLayers();
+            applyFilters();
+        }
+        var deleteButton = L.control({ position: 'topright' });
+        deleteButton.onAdd = function () {
+            var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control leaflet-control-custom');
+            div.innerHTML = '<button style="background:white;border:none;padding:5px;cursor:pointer;">🗑️</button>';
+            div.onclick = deleteAllLayers;
+            return div;
+        };
+        deleteButton.addTo(map);
+        map.on('moveend', updateVisibleEvents);
+        map.on('zoomend', updateVisibleEvents);
+        loadEventos();
+    }
+
+    function changeBasemap(layerName) {
+        for (let key in baseLayersObj) {
+            if (map.hasLayer(baseLayersObj[key])) {
+                map.removeLayer(baseLayersObj[key]);
+            }
+        }
+        map.addLayer(baseLayersObj[layerName]);
+    }
+
+    let chartClone = null;
+    function abrirModalGrafico(chartId) {
+        const originalChart = Highcharts.charts.find(chart => chart.renderTo.id === chartId);
+        if (!originalChart) return;
+        const modal = document.getElementById('modal-grafico');
+        const container = document.getElementById('grafico-ampliado');
+        const options = Highcharts.merge(originalChart.options);
+        options.chart.width = null;
+        options.chart.height = '80%';
+        if (chartClone) { chartClone.destroy(); }
+        chartClone = Highcharts.chart(container, options);
+        window.addEventListener('resize', ajustarTamanioGrafico);
+        modal.style.display = 'flex';
+    }
+    function cerrarModalGrafico() {
+        const modal = document.getElementById('modal-grafico');
+        modal.style.display = 'none';
+        if (chartClone) { chartClone.destroy(); chartClone = null; }
+        window.removeEventListener('resize', ajustarTamanioGrafico);
+    }
+    function ajustarTamanioGrafico() {
+        if (chartClone) { chartClone.reflow(); }
+    }
+    window.onclick = function (event) {
+        const modalGrafico = document.getElementById('modal-grafico');
+        if (event.target === modalGrafico) { cerrarModalGrafico(); }
+        const modalExportar = document.getElementById('modal-exportar');
+        if (event.target === modalExportar) { cerrarModal(); }
+    };
+    function handleChartClick(point) {
+        const chartId = point.series.chart.renderTo.id;
+        switch (chartId) {
+            case 'histogram-comuna':
+                activeFilters.comuna = (activeFilters.comuna === point.category) ? null : point.category;
+                break;
+            case 'histogram-prioridad':
+                activeFilters.priority = (activeFilters.priority === point.category.toUpperCase()) ? null : point.category.toUpperCase();
+                break;
+            case 'histogram-tipo-reporte':
+                activeFilters.tipoReporte = (activeFilters.tipoReporte === point.category) ? null : point.category;
+                break;
+            case 'histogram-time':
+                activeFilters.timeRange = (activeFilters.timeRange === point.category) ? null : point.category;
+                break;
+        }
+        applyFilters();
+    }
+    function createCharts() {
+        const commonModalOptions = {
+            chart: { backgroundColor: 'transparent', style: { fontFamily: 'Inter, sans-serif' } },
+            title: { style: { color: '#fff', fontSize: '24px' } },
+            legend: { itemStyle: { color: '#fff' } },
+            plotOptions: { series: { dataLabels: { color: '#fff', style: { fontSize: '14px' } } } }
+        };
+        charts.comuna = new Highcharts.Chart(Highcharts.merge(commonModalOptions, {
+            chart: { renderTo: 'histogram-comuna', type: 'bar' },
+            title: { text: 'Eventos por Comuna' },
+            xAxis: { categories: [], labels: { style: { fontSize: '8px', fontWeight: 'normal' } } },
+            yAxis: { title: { text: null } },
+            series: [{ name: 'Eventos', color: '#ff6b00' }]
+        }));
+        charts.prioridad = new Highcharts.Chart(Highcharts.merge(commonModalOptions, {
+            chart: { renderTo: 'histogram-prioridad', type: 'column' },
+            title: { text: 'Eventos por Prioridad' },
+            xAxis: { categories: ['Alta', 'Media', 'Baja'] },
+            yAxis: { title: { text: null } },
+            series: [{
+                name: 'Eventos',
+                data: [{ y: 0, color: '#ff0000' }, { y: 0, color: '#ffa500' }, { y: 0, color: '#00ff00' }]
+            }]
+        }));
+        charts.time = new Highcharts.Chart(Highcharts.merge(commonModalOptions, {
+            chart: { renderTo: 'histogram-time', type: 'bar' },
+            title: { text: 'Eventos por Hora' },
+            xAxis: { categories: [] },
+            yAxis: { title: { text: null }, reversed: true },
+            series: [{ name: 'Eventos', color: '#ffd700' }]
+        }));
+        charts.tipoReporte = new Highcharts.Chart(Highcharts.merge(commonModalOptions, {
+            chart: { renderTo: 'histogram-tipo-reporte', type: 'bar' },
+            title: { text: 'Tipos de Eventos' },
+            xAxis: { categories: [], labels: { style: { fontSize: '8px', fontWeight: 'normal' } } },
+            yAxis: { title: { text: null } },
+            series: [{ name: 'Eventos', data: [] }]
+        }));
+    }
+    function updateCharts(eventos) {
+        const comunaCounts = {};
+        eventos.forEach(evento => {
+            const comuna = evento.id_comuna__nombre || "Sin Asignar";
+            comunaCounts[comuna] = (comunaCounts[comuna] || 0) + 1;
+        });
+        charts.comuna.xAxis[0].setCategories(Object.keys(comunaCounts));
+        charts.comuna.series[0].setData(Object.values(comunaCounts));
+        const prioridadCounts = { ALTA: 0, MEDIA: 0, BAJA: 0 };
+        eventos.forEach(evento => {
+            prioridadCounts[evento.id_subtipo__prioridad.toUpperCase()]++;
+        });
+        charts.prioridad.series[0].setData([prioridadCounts.ALTA, prioridadCounts.MEDIA, prioridadCounts.BAJA]);
+        const timeLabels = [];
+        const timeCounts = {};
+        for (let hour = 0; hour < 24; hour++) {
+            let timeLabel = `${hour.toString().padStart(2, '0')}:00`;
+            timeLabels.push(timeLabel);
+            timeCounts[timeLabel] = 0;
+        }
+        eventos.forEach(evento => {
+            if (evento.hora) {
+                const hour = parseInt(evento.hora.split(':')[0]);
+                let timeLabel = `${hour.toString().padStart(2, '0')}:00`;
+                if (timeCounts.hasOwnProperty(timeLabel)) {
+                    timeCounts[timeLabel]++;
+                }
+            }
+        });
+        charts.time.xAxis[0].setCategories(timeLabels);
+        charts.time.series[0].setData(timeLabels.map(label => timeCounts[label]));
+        const tipoReporteCounts = {};
+        eventos.forEach(evento => {
+            tipoReporteCounts[evento.id_tipo__nombre] = (tipoReporteCounts[evento.id_tipo__nombre] || 0) + 1;
+        });
+        charts.tipoReporte.xAxis[0].setCategories(Object.keys(tipoReporteCounts));
+        charts.tipoReporte.series[0].setData(Object.values(tipoReporteCounts));
+    }
+    function loadEventos() {
+        fetch('/infoscan-eventos/')
+            .then(response => response.json())
+            .then(eventos => {
+                eventosData = eventos;
+                filteredEvents = eventos;
+                renderMarkers(filteredEvents);
+                updateVisibleEvents();
+            })
+            .catch(error => console.error('Error al cargar los eventos:', error));
+    }
+    function exportToExcel() {
+        const bounds = map.getBounds();
+        const eventosFiltrados = filteredEvents.filter(evento => {
+            const latLng = L.latLng(evento.latitud, evento.longitud);
+            return bounds.contains(latLng);
+        });
+        if (eventosFiltrados.length === 0) {
+            alert("No hay eventos visibles para exportar.");
+            return;
+        }
+        const csvContent = "data:text/csv;charset=utf-8," +
+            eventosFiltrados.map(evento => Object.values(evento).join(",")).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "eventos.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    function exportToPDF() {
+        const bounds = map.getBounds();
+        const eventosFiltrados = filteredEvents.filter(evento => {
+            const latLng = L.latLng(evento.latitud, evento.longitud);
+            return bounds.contains(latLng);
+        });
+        if (eventosFiltrados.length === 0) {
+            alert("No hay eventos visibles para exportar.");
+            return;
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.autoTable({
+            head: [['Nombre', 'Comuna', 'Prioridad', 'Detalle', 'Fecha']],
+            body: eventosFiltrados.map(evento => [
+                evento.nombre,
+                evento.id_comuna__nombre,
+                evento.id_subtipo__prioridad,
+                evento.detalle,
+                evento.fecha
+            ]),
+            styles: { fontSize: 10, cellPadding: 2, valign: 'middle', halign: 'center' },
+            headStyles: { fillColor: '#6366f1', textColor: '#ffffff' }
+        });
+        doc.save("eventos.pdf");
+    }
+    function applyFilters() {
+        let tempFilteredEvents = [...eventosData];
+
+        // Filtrado por fechas, si aplica
+        if (activeFilters.fechaInicio || activeFilters.fechaFin) {
+            tempFilteredEvents = tempFilteredEvents.filter(evento => {
+                const eventDate = new Date(evento.fecha);
+                const startDate = activeFilters.fechaInicio ? new Date(activeFilters.fechaInicio) : null;
+                const endDate = activeFilters.fechaFin ? new Date(activeFilters.fechaFin + 'T23:59:59') : null;
+                let valid = true;
+                if (startDate) valid = valid && (eventDate >= startDate);
+                if (endDate) valid = valid && (eventDate <= endDate);
+                return valid;
+            });
+        }
+
+        // Filtrado usando el polígono dibujado (si existe)
+        if (drawnItems && drawnItems.getLayers().length > 0) {
+            const polygonLayer = drawnItems.getLayers()[0];
+            const polygonGeoJSON = polygonLayer.toGeoJSON();
+            tempFilteredEvents = tempFilteredEvents.filter(evento => {
+                const pt = turf.point([evento.longitud, evento.latitud]);
+                return turf.booleanPointInPolygon(pt, polygonGeoJSON);
+            });
+        }
+
+        // Aquí se pueden aplicar otros filtros (por gráficos, etc.)
+        // Por ejemplo, filtro por prioridad, comuna, etc.
+        tempFilteredEvents = tempFilteredEvents.filter(evento => {
+            const eventHour = evento.hora ? evento.hora.split(':')[0].padStart(2, '0') + ':00' : null;
+            const matchesPriority = !activeFilters.priority || evento.id_subtipo__prioridad.toUpperCase() === activeFilters.priority;
+            const matchesComuna = !activeFilters.comuna || evento.id_comuna__nombre === activeFilters.comuna;
+            const matchesTipoReporte = !activeFilters.tipoReporte || evento.id_tipo__nombre === activeFilters.tipoReporte;
+            const matchesTime = !activeFilters.timeRange || eventHour === activeFilters.timeRange;
+            return matchesPriority && matchesComuna && matchesTipoReporte && matchesTime;
+        });
+
+        filteredEvents = tempFilteredEvents;
+        // Renderizamos nuevamente los marcadores y actualizamos el contador y gráficos:
+        renderMarkers(filteredEvents);
+        updateVisibleEvents();
+    }
+
+
+    function aplicarFiltroFechas() {
+        const rangeValue = document.getElementById('date-range').value;
+        if (!rangeValue) {
+            activeFilters.fechaInicio = null;
+            activeFilters.fechaFin = null;
+        } else {
+            const dates = rangeValue.split(" a ");
+            if (dates.length === 2) {
+                activeFilters.fechaInicio = dates[0];
+                activeFilters.fechaFin = dates[1];
+            } else {
+                activeFilters.fechaInicio = dates[0];
+                activeFilters.fechaFin = dates[0];
+            }
+        }
+        applyFilters();
+    }
+    function resetearFechas() {
+        document.getElementById('date-range').value = "";
+        activeFilters.fechaInicio = null;
+        activeFilters.fechaFin = null;
+        applyFilters();
+    }
+    function generateDynamicColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            const hue = (i * (360 / count)) % 360;
+            colors.push(`hsl(${hue}, 70%, 50%)`);
+        }
+        return colors;
+    }
+    function populateTipoReporteData(categories, values) {
+        const colors = generateDynamicColors(categories.length);
+        charts.tipoReporte.xAxis[0].setCategories(categories);
+        const formattedData = values.map((value, index) => ({ y: value, color: colors[index] }));
+        charts.tipoReporte.series[0].setData(formattedData);
+    }
+    // ===== Renderización de Marcadores usando MarkerCluster =====
+    function renderMarkers(eventos) {
+        if (markerClusterGroup) {
+            markerClusterGroup.clearLayers();
+        } else {
+            markerClusterGroup = L.markerClusterGroup();
+        }
+        eventos.forEach(evento => {
+            const lat = Number(evento.latitud);
+            const lng = Number(evento.longitud);
+            const icon = createCustomIcon(evento.id_subtipo__prioridad);
+            const marker = L.marker([lat, lng], { icon: icon, pane: 'markerPane' });
+            marker.myEvent = evento;
+            marker.on('click', function (e) {
+                showEventDetails(e.target.myEvent);
+            });
+            markerClusterGroup.addLayer(marker);
+        });
+        map.addLayer(markerClusterGroup);
+        markerClusterGroup.bringToFront();
+    }
+
+    function updateVisibleEvents() {
+        let visibleEvents = [];
+        // Si existe un polígono dibujado, filtra usando el polígono
+        if (drawnItems && drawnItems.getLayers().length > 0) {
+            const polygonLayer = drawnItems.getLayers()[0];
+            const polygonGeoJSON = polygonLayer.toGeoJSON();
+            visibleEvents = filteredEvents.filter(evento => {
+                // Usamos turf para verificar si el punto está dentro del polígono
+                const pt = turf.point([evento.longitud, evento.latitud]);
+                return turf.booleanPointInPolygon(pt, polygonGeoJSON);
+            });
+        } else {
+            // Sino, filtramos usando los límites del mapa
+            const bounds = map.getBounds();
+            visibleEvents = filteredEvents.filter(evento =>
+                bounds.contains(L.latLng(evento.latitud, evento.longitud))
+            );
+        }
+        // Actualiza el contador y los gráficos
+        const counterElement = document.getElementById('event-counter');
+        const countSpan = counterElement.querySelector('span');
+        countSpan.textContent = visibleEvents.length;
+        updateCharts(visibleEvents);
+    }
+    function createCustomIcon(prioridad) {
+        const colors = { ALTA: 'red', MEDIA: 'orange', BAJA: 'green' };
+        const color = colors[prioridad.toUpperCase()] || 'blue';
+        return L.divIcon({
+            html: `<i class="fas fa-map-marker-alt fa-beat" style="color: ${color}; font-size: 24px;"></i>`,
+            className: '',
+            iconSize: [24, 24],
+            iconAnchor: [12, 24]
+        });
+    }
+    async function showEventDetails(evento) {
+        cerrarEventModal();
+        const modalContent = document.getElementById('eventDetailsContent');
+        modalContent.innerHTML = `
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Nombre:</div>
+          <div class="col-8">${evento.nombre}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Fecha:</div>
+          <div class="col-8">${evento.fecha} ${evento.hora || ''}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Prioridad:</div>
+          <div class="col-8">
+            <span class="badge bg-${getPriorityBadgeClass(evento.id_subtipo__prioridad)}">
+              ${evento.id_subtipo__prioridad}
+            </span>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Comuna:</div>
+          <div class="col-8">${evento.id_comuna__nombre}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Detalles:</div>
+          <div class="col-8">${evento.detalle || 'Sin detalles adicionales'}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-12">
+            <h6 class="fw-bold">Imágenes asociadas:</h6>
+            <div id="eventImagesContainer" class="d-flex flex-wrap gap-2">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando imágenes...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+        loadEventImages(evento);
+        abrirEventModal();
+        document.querySelector('#eventModal .modal-footer').style.display = 'none';
+    }
+    function loadEventImages(evento) {
+        fetch(`/obtener-imagenes-evento/${evento.id_evento}/`)
+            .then(response => response.json())
+            .then(data => {
+                const imagesContainer = document.getElementById('eventImagesContainer');
+                imagesContainer.innerHTML = '';
+                if (data.imagenes.length > 0) {
+                    data.imagenes.forEach(imagen => {
+                        const imgElement = document.createElement('img');
+                        imgElement.src = imagen.url;
+                        imgElement.alt = imagen.nombre;
+                        imgElement.style.maxWidth = '150px';
+                        imgElement.style.maxHeight = '150px';
+                        imgElement.className = 'img-thumbnail cursor-pointer';
+                        imgElement.addEventListener('click', () => window.open(imagen.url, '_blank'));
+                        imagesContainer.appendChild(imgElement);
+                    });
+                } else {
+                    imagesContainer.innerHTML = '<span class="text fw-bold">Este evento no tiene imágenes asociadas</span>';
+                }
+            })
+            .catch(error => {
+                console.error('Error al cargar imágenes:', error);
+                document.getElementById('eventImagesContainer').innerHTML =
+                    '<span class="text-danger">Error al cargar las imágenes</span>';
+            });
+    }
+    function getPriorityBadgeClass(prioridad) {
+        const classes = { 'ALTA': 'danger', 'MEDIA': 'warning', 'BAJA': 'success' };
+        return classes[prioridad.toUpperCase()] || 'primary';
+    }
+    function showClusterModal() {
+        abrirEventModal();
+        updateClusterModal();
+        const footer = document.querySelector('#eventModal .modal-footer');
+        footer.style.display = (clusterEvents.length > 1) ? 'flex' : 'none';
+    }
+    function updateClusterModal() {
+        if (clusterEvents.length === 0) return;
+        const evento = clusterEvents[currentClusterIndex];
+        const modalContent = document.getElementById('eventDetailsContent');
+        modalContent.innerHTML = `
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Nombre:</div>
+          <div class="col-8">${evento.nombre}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Fecha:</div>
+          <div class="col-8">${evento.fecha} ${evento.hora || ''}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Prioridad:</div>
+          <div class="col-8">
+            <span class="badge bg-${getPriorityBadgeClass(evento.id_subtipo__prioridad)}">
+              ${evento.id_subtipo__prioridad}
+            </span>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Comuna:</div>
+          <div class="col-8">${evento.id_comuna__nombre}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Detalles:</div>
+          <div class="col-8">${evento.detalle || 'Sin detalles adicionales'}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-12">
+            <h6 class="fw-bold">Imágenes asociadas:</h6>
+            <div id="eventImagesContainer" class="d-flex flex-wrap gap-2">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando imágenes...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+        loadEventImages(evento);
+    }
+    function nextClusterEvent() {
+        if (clusterEvents.length === 0) return;
+        currentClusterIndex = (currentClusterIndex + 1) % clusterEvents.length;
+        updateClusterModal();
+    }
+    function prevClusterEvent() {
+        if (clusterEvents.length === 0) return;
+        currentClusterIndex = (currentClusterIndex - 1 + clusterEvents.length) % clusterEvents.length;
+        updateClusterModal();
+    }
+    function createCharts() {
+        const commonModalOptions = {
+            chart: { backgroundColor: 'transparent', style: { fontFamily: 'Inter, sans-serif' } },
+            title: { style: { color: '#fff', fontSize: '24px' } },
+            legend: { itemStyle: { color: '#fff' } },
+            plotOptions: { series: { dataLabels: { color: '#fff', style: { fontSize: '14px' } } } }
+        };
+        charts.comuna = new Highcharts.Chart(Highcharts.merge(commonModalOptions, {
+            chart: { renderTo: 'histogram-comuna', type: 'bar' },
+            title: { text: 'Eventos por Comuna' },
+            xAxis: { categories: [], labels: { style: { fontSize: '8px', fontWeight: 'normal' } } },
+            yAxis: { title: { text: null } },
+            series: [{ name: 'Eventos', color: '#ff6b00' }]
+        }));
+        charts.prioridad = new Highcharts.Chart(Highcharts.merge(commonModalOptions, {
+            chart: { renderTo: 'histogram-prioridad', type: 'column' },
+            title: { text: 'Eventos por Prioridad' },
+            xAxis: { categories: ['Alta', 'Media', 'Baja'] },
+            yAxis: { title: { text: null } },
+            series: [{
+                name: 'Eventos',
+                data: [{ y: 0, color: '#ff0000' }, { y: 0, color: '#ffa500' }, { y: 0, color: '#00ff00' }]
+            }]
+        }));
+        charts.time = new Highcharts.Chart(Highcharts.merge(commonModalOptions, {
+            chart: { renderTo: 'histogram-time', type: 'bar' },
+            title: { text: 'Eventos por Hora' },
+            xAxis: { categories: [] },
+            yAxis: { title: { text: null }, reversed: true },
+            series: [{ name: 'Eventos', color: '#ffd700' }]
+        }));
+        charts.tipoReporte = new Highcharts.Chart(Highcharts.merge(commonModalOptions, {
+            chart: { renderTo: 'histogram-tipo-reporte', type: 'bar' },
+            title: { text: 'Tipos de Eventos' },
+            xAxis: { categories: [], labels: { style: { fontSize: '8px', fontWeight: 'normal' } } },
+            yAxis: { title: { text: null } },
+            series: [{ name: 'Eventos', data: [] }]
+        }));
+    }
+    function updateCharts(eventos) {
+        const comunaCounts = {};
+        eventos.forEach(evento => {
+            const comuna = evento.id_comuna__nombre || "Sin Asignar";
+            comunaCounts[comuna] = (comunaCounts[comuna] || 0) + 1;
+        });
+        charts.comuna.xAxis[0].setCategories(Object.keys(comunaCounts));
+        charts.comuna.series[0].setData(Object.values(comunaCounts));
+        const prioridadCounts = { ALTA: 0, MEDIA: 0, BAJA: 0 };
+        eventos.forEach(evento => {
+            prioridadCounts[evento.id_subtipo__prioridad.toUpperCase()]++;
+        });
+        charts.prioridad.series[0].setData([prioridadCounts.ALTA, prioridadCounts.MEDIA, prioridadCounts.BAJA]);
+        const timeLabels = [];
+        const timeCounts = {};
+        for (let hour = 0; hour < 24; hour++) {
+            let timeLabel = `${hour.toString().padStart(2, '0')}:00`;
+            timeLabels.push(timeLabel);
+            timeCounts[timeLabel] = 0;
+        }
+        eventos.forEach(evento => {
+            if (evento.hora) {
+                const hour = parseInt(evento.hora.split(':')[0]);
+                let timeLabel = `${hour.toString().padStart(2, '0')}:00`;
+                if (timeCounts.hasOwnProperty(timeLabel)) {
+                    timeCounts[timeLabel]++;
+                }
+            }
+        });
+        charts.time.xAxis[0].setCategories(timeLabels);
+        charts.time.series[0].setData(timeLabels.map(label => timeCounts[label]));
+        const tipoReporteCounts = {};
+        eventos.forEach(evento => {
+            tipoReporteCounts[evento.id_tipo__nombre] = (tipoReporteCounts[evento.id_tipo__nombre] || 0) + 1;
+        });
+        charts.tipoReporte.xAxis[0].setCategories(Object.keys(tipoReporteCounts));
+        charts.tipoReporte.series[0].setData(Object.values(tipoReporteCounts));
+    }
+    function loadEventos() {
+        fetch('/infoscan-eventos/')
+            .then(response => response.json())
+            .then(eventos => {
+                eventosData = eventos;
+                filteredEvents = eventos;
+                renderMarkers(filteredEvents);
+                updateVisibleEvents();
+            })
+            .catch(error => console.error('Error al cargar los eventos:', error));
+    }
+    function exportToExcel() {
+        const bounds = map.getBounds();
+        const eventosFiltrados = filteredEvents.filter(evento => {
+            const latLng = L.latLng(evento.latitud, evento.longitud);
+            return bounds.contains(latLng);
+        });
+        if (eventosFiltrados.length === 0) {
+            alert("No hay eventos visibles para exportar.");
+            return;
+        }
+        const csvContent = "data:text/csv;charset=utf-8," +
+            eventosFiltrados.map(evento => Object.values(evento).join(",")).join("\n");
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", "eventos.csv");
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    function exportToPDF() {
+        const bounds = map.getBounds();
+        const eventosFiltrados = filteredEvents.filter(evento => {
+            const latLng = L.latLng(evento.latitud, evento.longitud);
+            return bounds.contains(latLng);
+        });
+        if (eventosFiltrados.length === 0) {
+            alert("No hay eventos visibles para exportar.");
+            return;
+        }
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        doc.autoTable({
+            head: [['Nombre', 'Comuna', 'Prioridad', 'Detalle', 'Fecha']],
+            body: eventosFiltrados.map(evento => [
+                evento.nombre,
+                evento.id_comuna__nombre,
+                evento.id_subtipo__prioridad,
+                evento.detalle,
+                evento.fecha
+            ]),
+            styles: { fontSize: 10, cellPadding: 2, valign: 'middle', halign: 'center' },
+            headStyles: { fillColor: '#6366f1', textColor: '#ffffff' }
+        });
+        doc.save("eventos.pdf");
+    }
+    function aplicarFiltroFechas() {
+        const rangeValue = document.getElementById('date-range').value;
+        if (!rangeValue) {
+            activeFilters.fechaInicio = null;
+            activeFilters.fechaFin = null;
+        } else {
+            const dates = rangeValue.split(" a ");
+            if (dates.length === 2) {
+                activeFilters.fechaInicio = dates[0];
+                activeFilters.fechaFin = dates[1];
+            } else {
+                activeFilters.fechaInicio = dates[0];
+                activeFilters.fechaFin = dates[0];
+            }
+        }
+        applyFilters();
+    }
+    function resetearFechas() {
+        document.getElementById('date-range').value = "";
+        activeFilters.fechaInicio = null;
+        activeFilters.fechaFin = null;
+        applyFilters();
+    }
+    function generateDynamicColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            const hue = (i * (360 / count)) % 360;
+            colors.push(`hsl(${hue}, 70%, 50%)`);
+        }
+        return colors;
+    }
+    function populateTipoReporteData(categories, values) {
+        const colors = generateDynamicColors(categories.length);
+        charts.tipoReporte.xAxis[0].setCategories(categories);
+        const formattedData = values.map((value, index) => ({ y: value, color: colors[index] }));
+        charts.tipoReporte.series[0].setData(formattedData);
+    }
+    function abrirModal() {
+        document.getElementById('modal-exportar').style.display = 'flex';
+    }
+    function cerrarModal() {
+        document.getElementById('modal-exportar').style.display = 'none';
+    }
+    window.onload = function () {
+        initMap();
+        createCharts();
+        flatpickr("#date-range", { mode: "range", dateFormat: "Y-m-d", locale: "es" });
+    };
+</script>
+
+<!-- Modal para Ampliar Gráficos -->
+<div id="modal-grafico" class="modal-grafico">
+    <span class="cerrar-modal-grafico" onclick="cerrarModalGrafico()">&times;</span>
+    <div class="modal-grafico-contenido">
+        <div id="grafico-ampliado" style="height:100%; width:100%;"></div>
+    </div>
+</div>
+
+<!-- Modal de Detalles del Evento con navegación de clúster -->
+<script>
+    // Inyectamos un footer en el modal de detalles si no existe
+    window.addEventListener('load', function () {
+        const modal = document.getElementById('eventModal');
+        if (modal && !modal.querySelector('.modal-footer')) {
+            const footer = document.createElement('div');
+            footer.classList.add('modal-footer');
+            footer.innerHTML = `<button onclick="prevClusterEvent()">&larr; Prev</button><button onclick="nextClusterEvent()">Next &rarr;</button>`;
+            modal.querySelector('.modal-content').appendChild(footer);
+        }
+    });
+
+    // Funciones para mostrar y cerrar el modal de detalles
+    function abrirEventModal() {
+        document.getElementById('eventModal').style.display = 'flex';
+    }
+    function cerrarEventModal() {
+        document.getElementById('eventModal').style.display = 'none';
+    }
+
+    // Funciones para navegación en clúster
+    function showClusterModal() {
+        abrirEventModal();
+        updateClusterModal();
+        const footer = document.querySelector('#eventModal .modal-footer');
+        footer.style.display = (clusterEvents.length > 1) ? 'flex' : 'none';
+    }
+    function updateClusterModal() {
+        if (clusterEvents.length === 0) return;
+        const evento = clusterEvents[currentClusterIndex];
+        const modalContent = document.getElementById('eventDetailsContent');
+        modalContent.innerHTML = `
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Nombre:</div>
+          <div class="col-8">${evento.nombre}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Fecha:</div>
+          <div class="col-8">${evento.fecha} ${evento.hora || ''}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Prioridad:</div>
+          <div class="col-8">
+            <span class="badge bg-${getPriorityBadgeClass(evento.id_subtipo__prioridad)}">
+              ${evento.id_subtipo__prioridad}
+            </span>
+          </div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Comuna:</div>
+          <div class="col-8">${evento.id_comuna__nombre}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-4 fw-bold">Detalles:</div>
+          <div class="col-8">${evento.detalle || 'Sin detalles adicionales'}</div>
+        </div>
+        <div class="row mb-3">
+          <div class="col-12">
+            <h6 class="fw-bold">Imágenes asociadas:</h6>
+            <div id="eventImagesContainer" class="d-flex flex-wrap gap-2">
+              <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Cargando imágenes...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      `;
+        loadEventImages(evento);
+    }
+    function nextClusterEvent() {
+        if (clusterEvents.length === 0) return;
+        currentClusterIndex = (currentClusterIndex + 1) % clusterEvents.length;
+        updateClusterModal();
+    }
+    function prevClusterEvent() {
+        if (clusterEvents.length === 0) return;
+        currentClusterIndex = (currentClusterIndex - 1 + clusterEvents.length) % clusterEvents.length;
+        updateClusterModal();
+    }
+</script>
+
+
+
+{% endblock content %}
